@@ -10,10 +10,9 @@
   "license": "ISC",
   "dependencies": {
     "ask-sdk-core": "^2.0.0",
-    "ask-sdk-model": "^1.0.0",
-    "typescript": "^2.8.4"
+    "ask-sdk-model": "^1.0.0"
   },
   "devDependencies": {
-    "@types/node": "^10.1.4"
+    
   }
 }

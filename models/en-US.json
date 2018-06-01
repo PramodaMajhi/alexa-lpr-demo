@@ -1,7 +1,7 @@
 {
   "interactionModel": {
     "languageModel": {
-      "invocationName": "hello world",
+      "invocationName": "blue demo",
       "intents": [
         {
           "name": "AMAZON.CancelIntent",
@@ -16,9 +16,13 @@
           "samples": []
         },
         {
-          "name": "HelloWorldIntent",
+          "name": "AMAZON.YesIntent",
+          "samples": []
+        },
+        {
+          "name": "HelloWorldIntent",          
           "samples": [
-            "hello"
+              "hello"
           ]
         }
       ]

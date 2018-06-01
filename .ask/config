@@ -1,19 +1,20 @@
 {
   "deploy_settings": {
     "default": {
-      "skill_id": "",
+      "skill_id": "amzn1.ask.skill.93368ea0-e770-4a62-981b-0fa34be1fb70",
       "was_cloned": false,
       "merge": {
         "manifest": {
           "apis": {
             "custom": {
               "endpoint": {
-                "uri": "ask-custom-helloworld-default"
+                "uri": "blue-lpr-demo"
               }
             }
           }
         }
-      }
+      },
+      "in_skill_products": []
     }
   }
 }

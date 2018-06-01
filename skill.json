@@ -5,11 +5,9 @@
         "en-US": {
           "summary": "Sample Short Description",
           "examplePhrases": [
-            "Alexa open hello world",
-            "hello",
-            "help"
+            "Alexa open blue LPR demo"
           ],
-          "name": "Hello World",
+          "name": "Blue LPR Demo",
           "description": "Sample Full Description"
         }
       },
