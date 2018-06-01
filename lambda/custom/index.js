@@ -3,6 +3,24 @@
 
 const Alexa = require('ask-sdk-core')
 
+const MED = {
+  name: "Metformin",
+  refillsAvailable: "2",
+  readyDate: "June 6th",
+  prescriptionNumber: "14724530"
+}
+
+const PHARMACY = {
+  name: "CVS Pharmacy",
+  address: {
+    street: "150 Donahue Street.",
+    city: "Saulsalito",
+    state: "CA",
+    zip: "94965",
+  },
+  phone: "(415) 339-0169"
+}
+
 const HEAR_IMPORTANT_MESSAGE = "HearImportantMessage?"
 const ORDER_REFILL = "OrderRefill?"
 const CREATE_PICKUP_REMINDER = "CreatePickupReminder?"
@@ -23,19 +41,23 @@ const intentIs = (handlerInput, intent) => {
   return result
 }
 
+// for every line of a multi-line string, remove the characters fom the beginning of the line to the pipe character
+String.prototype.stripMargin = function () {
+  return this.replace(/^.*\|/gm, '')
+}
+
 const LaunchRequestHandler = {
   canHandle(handlerInput) {
     console.log(`request: ${JSON.stringify(handlerInput, null, 2)}`)
     return handlerInput.requestEnvelope.request.type === 'LaunchRequest'
   },
   handle(handlerInput) {
-    const speechText = "Good morning Addison. I have an important message for you. Would you like to hear it?"
 
     handlerInput.attributesManager.setSessionAttributes({state: HEAR_IMPORTANT_MESSAGE})
 
     return handlerInput.responseBuilder
-      .speak(speechText)
-      .reprompt(speechText)
+      .speak("Good morning Addison. I have an important message for you. Would you like to hear it?")
+      .reprompt("Would you like to hear the important message?")
       .getResponse()
   },
 }
@@ -48,11 +70,14 @@ const ImportantMessageHandler = {
     let builder = handlerInput.responseBuilder
 
     if (intentIs(handlerInput, "AMAZON.YesIntent")) {
-      builder.speak("I noticed you have a prescription for drug name ready for refill on June 6th." +
-                    " It was refilled last time at CVS Pharmacy at 150 Donahue Street, Sausalito." +
-                    " There are 2 more refills available." +
-                    " Would you like me to order a refill for you at the same location?")
       handlerInput.attributesManager.setSessionAttributes({state: ORDER_REFILL})
+
+      let speechText = `I noticed you have a prescription for ${MED.name} ready for refill on ${MED.readyDate}.
+                        |It was refilled last time at ${PHARMACY.name} at ${PHARMACY.address.street}, ${PHARMACY.address.city}.
+                        |There are ${MED.refillsAvailable} more refills available.
+                        |Would you like me to order a refill for you at the same location?`.stripMargin()
+      builder.speak(speechText)
+             .reprompt(`Would you like me to order a refill for ${MED.name} at ${PHARMACY.name} at ${PHARMACY.address.street}?`)
     } else {
       builder
         .speak("Ok. Goodbye.")
@@ -70,28 +95,32 @@ const OrderRefillHandler = {
   handle(handlerInput) {
     let builder = handlerInput.responseBuilder
 
+    let speechText = `I've placed your refill order and it should be ready for pickup on ${MED.readyDate}.
+                      |I've also sent a card with the pharmacy address and prescription information.
+                      |Would you like me to create a reminder for ${MED.readyDate} to pick up the prescription?`.stripMargin()
+
+    let cardText = `Your refill prescription for ${MED.name} should be ready on ${MED.readyDate} at:
+                    |${PHARMACY.name}
+                    |${PHARMACY.address.street}
+                    |${PHARMACY.address.city}, ${PHARMACY.address.state}, ${PHARMACY.address.zip}
+                    |
+                    |Phone: ${PHARMACY.phone}
+                    |
+                    |Your prescription number is: ${MED.prescriptionNumber}`.stripMargin()
+
     if (intentIs(handlerInput, "AMAZON.YesIntent")) {
-      builder.speak("I've placed your refill order and it should be ready for pickup on June 6th." +
-                    " I've also sent a card with the pharmacy address and prescription information." +
-                    " Would you like me to create a reminder for June 6th to pick up the prescription?")
-              .withSimpleCard("Prescription",
-                  "Your prescription for some medicine should be ready on June 6th at:\n" +
-                  "CVS Pharmacy\n" +
-                  "150 Donahue St.\n" +
-                  "Saulsalito, CA, 94965\n\n" +
-                  "Phone: (415) 339-0169\n\n" +
-                  "Your prescription number is: 14724530"
-                )
-      
+      builder.speak(speechText)
+              .reprompt("Would you like me to create a reminder to pick up the prescription?")
+              .withSimpleCard("Prescription", cardText)      
     } else {
       builder
-        .speak("Ok. I can't order at other locations yet. Goodbye.")
+        .speak("Ok. I'm sorry, but I can't order at other locations yet. Goodbye.")
         .withShouldEndSession(true)
     }
 
     handlerInput.attributesManager.setSessionAttributes({state: CREATE_PICKUP_REMINDER})
 
-    return builder.getResponse();
+    return builder.getResponse()
   }
 }
 
@@ -110,12 +139,37 @@ const CreatePickupReminderHandler = {
       speechText = "Ok."
     }
 
-    speechText += "I see you should take this medicine twice per day. Would you like me to create reminders for you each morning and evening?"
+    speechText += " I see you should take this medicine twice per day. Would you like me to create reminders for you each morning and evening?"
 
     handlerInput.attributesManager.setSessionAttributes({state: CREATE_MEDICATION_REMINDER})
 
     return builder
       .speak(speechText)
+      .reprompt("Would you like me to create medication reminders for you?")
+      .getResponse();
+  }
+}
+
+const CreateMedicationReminderHandler = {
+  canHandle(handlerInput) {
+    return stateIs(handlerInput, CREATE_MEDICATION_REMINDER)
+  },
+  handle(handlerInput) {
+    let builder = handlerInput.responseBuilder
+
+    let speechText
+
+    if (intentIs(handlerInput, "AMAZON.YesIntent")) {
+      speechText = "OK, I've created a medication reminder for you."
+    } else {
+      speechText = "Ok."
+    }
+
+    speechText += " Thank you for using Blue Shield of California. Goodbye."
+    
+    return builder
+      .speak(speechText)
+      
       .getResponse();
   }
 }
@@ -125,12 +179,11 @@ const HelpIntentHandler = {
     return intentIs(handlerInput, 'AMAZON.HelpIntent');
   },
   handle(handlerInput) {
-    const speechText = 'You can say hello to me!';
+    const speechText = 'There is no help message for now. You\'re on your own!';
 
     return handlerInput.responseBuilder
       .speak(speechText)
       .reprompt(speechText)
-      .withSimpleCard('Hello World', speechText)
       .getResponse();
   },
 };
@@ -168,8 +221,8 @@ const ErrorHandler = {
     console.log(`Error handled: ${error.message}`);
 
     return handlerInput.responseBuilder
-      .speak('Sorry, I can\'t understand the command. Please say again.')
-      .reprompt('Sorry, I can\'t understand the command. Please say again.')
+      .speak('Sorry, I can\'t understand the command. Will you please say it again?')
+      .reprompt('Sorry, I can\'t understand the command. Will you please say it again?')
       .getResponse();
   },
 };
@@ -178,12 +231,14 @@ const skillBuilder = Alexa.SkillBuilders.custom();
 
 exports.handler = skillBuilder
   .addRequestHandlers(
+    SessionEndedRequestHandler,
+    CancelAndStopIntentHandler,
+    HelpIntentHandler,  
     LaunchRequestHandler,
     ImportantMessageHandler,
     OrderRefillHandler,
-    HelpIntentHandler,
-    CancelAndStopIntentHandler,
-    SessionEndedRequestHandler
+    CreatePickupReminderHandler,
+    CreateMedicationReminderHandler
   )
   .addErrorHandlers(ErrorHandler)
   .lambda();
