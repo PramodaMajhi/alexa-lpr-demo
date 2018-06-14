@@ -54,10 +54,10 @@ class NotificationQueue {
     if (this.length) {
       let notification = this.peek()
 
-      if (notification.personal && ! context.getAttribute(CONST.PIN_ENTERED)) {
-        let speak =   `Your first notification has personal information. 
+      if (notification.personal && !context.getAttribute(CONST.PIN_ENTERED)) {
+        let speak = `Your first notification has personal information. 
                       | Please say your Blue Shield 4-digit pin if you would like to hear it now, 
-                      | or continue with a question.`.stripMargin()  
+                      | or continue with a question.`.stripMargin()
         context.speakReprompt(speak, 'Please say you PIN.')
         context.setState(STATE.WAITING_FOR_PIN)
         return
@@ -65,7 +65,7 @@ class NotificationQueue {
 
       // we have a notification and the PIN is not required or has already been entered. 
       // Begin execution of the notification.
-      context.setAttribute("path", "0")
+      context.setAttribute('path', '0')
       this.execute(context)
       return
     }
@@ -73,116 +73,155 @@ class NotificationQueue {
 
   execute(context) {
     let notification = this.peek()
-    let tree = trees[notification.type](notification)
-    let path = context.getAttribute("path")
+    let list = lists[notification.type](notification)
+    
 
   }
 }
 
-const appointmentTree = (item) => {
+const appointmentList = (item) => {
   const { type, date, time } = item.detail
   const list = [
     {
-      speech: `You have an ${type} appointment ${date} at ${time}. Would you like me to set a reminder?`
+      when: { state: STATE.NULL },
+      then: {
+        speak: `You have an ${type} appointment ${date} at ${time}. Would you like me to set a reminder?`,
+        reprompt: 'Shall I set a reminder?',
+        setState: STATE.SET_REMINDER
+      }
     },
     {
-      reprompt: "Shall I set a reminder?"
+      when: {
+        state: STATE.SET_REMINDER,
+        intent: CONST.YES_INTENT
+      },
+      then: {
+        speak: "OK, I've created a reminder."
+      }
     },
     {
-      branches: {
-        "AMAZON.YesIntent": [{ speech: "OK, I've created a reminder." }],
-        "AMAZON.NoIntent": [{ speech: "OK" }]
+      when: {
+        state: STATE.SET_REMINDER,
+        intent: CONST.NO_INTENT
+      },
+      then: {
+        speak: 'OK.'
+      }
+    }
+  ]
+
+  return list
+}
+
+
+const refillList = (item) => {
+  const { med, pharmacy } = item.detail
+  const list = [
+    {
+      when: { state: STATE.NULL },
+      then: {
+        speak: `I noticed in your patient health record that you have a prescription
+                | for ${med.name}, ready for refill on ${med.readyDate}.
+                | It was last refilled at ${pharmacy.name} at ${pharmacy.address.street}, ${pharmacy.address.city}.
+                | There are ${med.refillsAvailable} more refills available.
+                | Would you like me to help you refill this prescription?`.stripMargin(),
+        reprompt: `Would you like me to order a refill for ${med.name} at ${pharmacy.name} at ${pharmacy.address.street}?`,
+        setState: STATE.ORDER_REFILL
+      }
+    },
+    {
+      when: {
+        state: STATE.ORDER_REFILL,
+        intent: CONST.YES_INTENT
+      },
+      then: {
+        speak: `Okay. This prescription will be refilled at the same location. 
+              | But, since this is a routine prescription, you might want to change your prescription
+              | to a mail order pharmacy. Would you like to hear more about this?`.stripMargin(),
+        reprompt: 'Would you like to hear more about mail order prescriptions?',
+        setState: STATE.HEAR_ABOUT_MAIL_ORDER
+      }
+    },
+    {
+      when: {
+        state: STATE.ORDER_REFILL,
+        intent: CONST.NO_INTENT
+      },
+      then: {
+        speak: 'Okay.'
+      }
+    },
+    {
+      when: {
+        state: STATE.HEAR_ABOUT_MAIL_ORDER,
+        intent: CONST.YES_INTENT
+      },
+      then: {
+        speak: 'Sorry, I have not yet been programmed to tell you abour mail order pharmacies yet.',
+        jump: {intent: CONST.NO_INTENT}
+      },
+    },
+    {
+      when: {
+        state: STATE.HEAR_ABOUT_MAIL_ORDER,
+        intent: CONST.NO_INTENT
+      },
+      then: {
+        speak: `I've placed your refill order and it should be ready for pickup on ${med.readyDate}.
+                | I've also sent a card with the pharmacy address and prescription information.
+                | Would you like me to create a reminder for ${med.readyDate} to pick up the prescription?`.stripMargin(),
+        reprompt: 'Would you like me to create a reminder to pick up the prescription?',
+        cardTitle: 'Prescription',
+        cardText: `Your refill prescription for ${med.name} should be ready on ${med.readyDate} at:
+                  |${pharmacy.name}
+                  |${pharmacy.address.street}
+                  |${pharmacy.address.city}, ${pharmacy.address.state}, ${pharmacy.address.zip}
+                  |
+                  |Phone: ${pharmacy.phone}
+                  |
+                  |Your prescription number is: ${med.prescriptionNumber}`.stripMargin(),
+        setState: STATE.CREATE_SCRIP_REMINDER
+      }
+    },
+    {
+      when: {
+        state: STATE.CREATE_SCRIP_REMINDER,
+        intent: CONST.YES_INTENT
+      },
+      then: {
+        speak: "OK, I've created a reminder to pick up the prescription."
+      }
+    },
+    {
+      when: {
+        state: STATE.CREATE_SCRIP_REMINDER,
+        intent: CONST.NO_INTENT
+      },
+      then: {
+        speak: 'OK.'
+      }
+    }
+  ]
+  return list 
+}
+
+const announcementList = (item) => {
+  const { message } = item.detail
+  const list = [
+    {
+      when: { state: STATE.NULL },
+      then: {
+        speak: message
       }
     }
   ]
   return list
 }
 
-
-const refillTree = (item) => {
-  const { med, pharmacy } = item.detail
-  const list = [
-    {
-      speech: `I noticed in your patient health record that you have a prescription
-              | for ${med.name}, ready for refill on ${med.readyDate}.
-              | It was last refilled at ${pharmacy.name} at ${pharmacy.address.street}, ${pharmacy.address.city}.
-              | There are ${med.refillsAvailable} more refills available.
-              | Would you like me to help you refill this prescription?`.stripMargin()
-    },
-    {
-      reprompt: `Would you like me to order a refill for ${med.name} at ${pharmacy.name} at ${pharmacy.address.street}?`
-    },
-    {
-      branches: {
-        "AMAZON.YesIntent": [
-          {
-            speech: `Okay. This prescription will be refilled at the same location. 
-                      | But, since this is a routine prescription, you might want to change your prescription
-                      | to a mail order pharmacy. Would you like to hear more about this?`.stripMargin()
-          },
-          {
-            reprompt: 'Would you like to hear more about mail order prescriptions?'
-          },
-          {
-            branches: {
-              "AMAZON.YesIntent": [
-                { speech: "Sorry, I have not yet been programmed to tell you abour mail order pharmacies yet." },
-                { jump: "AMAZON.NoIntent" }
-              ],
-              "AMAZON.NoIntent": [
-                {
-                  speech: `I've placed your refill order and it should be ready for pickup on ${med.readyDate}.
-                              | I've also sent a card with the pharmacy address and prescription information.
-                              | Would you like me to create a reminder for ${med.readyDate} to pick up the prescription?`.stripMargin()
-                },
-                {
-                  reprompt: 'Would you like me to create a reminder to pick up the prescription?'
-                },
-                {
-                  card: `Your refill prescription for ${med.name} should be ready on ${med.readyDate} at:
-                              |${pharmacy.name}
-                              |${pharmacy.address.street}
-                              |${pharmacy.address.city}, ${pharmacy.address.state}, ${pharmacy.address.zip}
-                              |
-                              |Phone: ${pharmacy.phone}
-                              |
-                              |Your prescription number is: ${med.prescriptionNumber}`.stripMargin()
-                },
-                {
-                  branches: {
-                    "AMAZON.YesIntent": [
-                      { speech: "OK, I've created a reminder to pick up the prescription." }
-                    ],
-                    "AMAZON.NoIntent": [
-                      { speech: "OK." }
-                    ]
-                  }
-                }
-              ]
-            }
-          }
-        ]
-      },
-      "AMAZON.NoIntent": [{ speech: 'OK' }]
-    }
-  ]
-  return list
-}
-
-const announcementTree = (item) => {
-  const { message } = item.detail
-  const list = [
-    {
-      speech: message
-    }
-  ]
-  return list
-}
-
-const trees = {
-  'appointment': appointmentTree,
-  'refill': refillTree,
-  'announcement': announcementTree
+const lists = {
+  'appointment': appointmentList,
+  'refill': refillList,
+  'announcement': announcementList
 }
 
 exports.NotificationQueue = NotificationQueue
