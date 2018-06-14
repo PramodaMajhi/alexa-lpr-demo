@@ -1,31 +1,63 @@
 {
   "interactionModel": {
-    "languageModel": {
-      "invocationName": "blue demo",
-      "intents": [
-        {
-          "name": "AMAZON.CancelIntent",
-          "samples": []
-        },
-        {
-          "name": "AMAZON.HelpIntent",
-          "samples": []
-        },
-        {
-          "name": "AMAZON.StopIntent",
-          "samples": []
-        },
-        {
-          "name": "AMAZON.YesIntent",
-          "samples": []
-        },
-        {
-          "name": "HelloWorldIntent",          
-          "samples": [
-              "hello"
-          ]
-        }
-      ]
-    }
+      "languageModel": {
+          "invocationName": "blue demo two",
+          "intents": [
+              {
+                  "name": "AMAZON.CancelIntent",
+                  "samples": []
+              },
+              {
+                  "name": "AMAZON.HelpIntent",
+                  "samples": []
+              },
+              {
+                  "name": "AMAZON.StopIntent",
+                  "samples": []
+              },
+              {
+                  "name": "AMAZON.YesIntent",
+                  "samples": []
+              },
+              {
+                  "name": "AMAZON.NoIntent",
+                  "samples": []
+              },
+              {
+                  "name": "PinIntent",
+                  "slots": [
+                      {
+                          "name": "pin",
+                          "type": "AMAZON.FOUR_DIGIT_NUMBER"
+                      }
+                  ],
+                  "samples": [
+                      "{pin}"
+                  ]
+              },
+              {
+                  "name": "RecipeIntent",
+                  "slots": [],
+                  "samples": [
+                      "do you know any recipes",
+                      "Can i have a recipe",
+                      "I'd like a recipe recommendation for tonight",
+                      "I'd like a recipe recommendation"
+                  ]
+              },
+              {
+                  "name": "NotificationsIntent",
+                  "slots": [],
+                  "samples": [
+                    "play notifications",
+                    "play my notifications",
+                    "do I have any notifications",
+                    "play messages",
+                    "do I have any messages"                    
+                  ]
+              }
+          ],
+          "types": []
+      }
   }
 }

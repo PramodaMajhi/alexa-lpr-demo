@@ -8,7 +8,7 @@
           "apis": {
             "custom": {
               "endpoint": {
-                "uri": "blue-lpr-demo"
+                "uri": "blue-lpr-demo-2"
               }
             }
           }
