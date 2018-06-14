@@ -38,6 +38,12 @@ const LaunchRequestHandler = {
     return handlerInput.requestEnvelope.request.type === CONST.LAUNCH_REQUEST
   },
   handle(handlerInput) {
+    // Alexa is having a serious problem recognizing PINS right now
+    // I even tried it on older projects that have been used for months, and the PIN intent (AMAZON.FOUR_DIGIT_NUMBER)
+    // is not recognized.
+    // This is temporary
+    context.setAttribute(ATTR.WAS_PIN_ENTERED, true)
+
     context.speak(`${greeting()} ${CONST.NAME}.`)
     queue.getNotificationNumberText(context)
     queue.startNotification(handlerInput.requestEnvelope.request, context)
@@ -50,6 +56,7 @@ const PlayNotificationsHandler = {
     return intentIs(handlerInput, CONST.NOTIFICATIONS_INTENT)
   },
   handle(handlerInput) {
+    queue.getNotificationNumberText(context)
     queue.startNotification(handlerInput.requestEnvelope.request, context)
     if (!context.done()) {
       queue.askAboutNextNotification(context)
@@ -128,7 +135,7 @@ const SpecificRecipeHandler = {
     } else {
       context.speak("As you wish!")
     }
-      
+
     queue.askAboutNextNotification(context)
 
     return context.getResponse(handlerInput)
@@ -144,7 +151,7 @@ const HearNextNotificationHandler = {
       queue.startNotification(handlerInput.requestEnvelope.request, context)
       if (!context.done()) {
         queue.askAboutNextNotification(context)
-      }      
+      }
     } else if (intentIs(handlerInput, CONST.NO_INTENT)) {
       context.speak("Okay.")
       context.speakReprompt(whatNext(), "What next?")
@@ -236,16 +243,28 @@ const configureBuilder = () => {
   return skillBuilder
 }
 
-exports.handler = configureBuilder().lambda()
-
-// this handler enables the skill to be invoked repeatedly without creating a new skill
-// it also returns the result rather than calling the callback provided by AWS lambda
 let skill
-exports.handler2 = async (event, context) => {
-  if (! skill) {
+
+exports.handler = async (event, context, callback) => {
+  console.log(`EVENT: ${JSON.stringify(event, null, 2)}`)
+
+  if (!skill) {
     skill = configureBuilder().create()
   }
-  
-  let response = skill.invoke(event, context)
-  return response  
+
+  try {
+    let response = await skill.invoke(event, context)
+    console.log(`RESPONSE: ${JSON.stringify(response, null, 2)}`)
+    if (callback) {
+      callback(null, response)
+    }
+    return response
+  } catch (err) {
+    console.log(`ERROR: ${err}`)
+    if (callback) {
+      callback(err, null)
+    } else {
+      throw err
+    }
+  }
 }

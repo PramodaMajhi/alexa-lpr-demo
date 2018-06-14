@@ -32,7 +32,8 @@
                       }
                   ],
                   "samples": [
-                      "{pin}"
+                      "{pin}",
+                      "my pin is {pin}"
                   ]
               },
               {
@@ -40,7 +41,6 @@
                   "slots": [],
                   "samples": [
                       "do you know any recipes",
-                      "Can i have a recipe",
                       "I'd like a recipe recommendation for tonight",
                       "I'd like a recipe recommendation"
                   ]
@@ -49,11 +49,11 @@
                   "name": "NotificationsIntent",
                   "slots": [],
                   "samples": [
-                    "play notifications",
-                    "play my notifications",
-                    "do I have any notifications",
-                    "play messages",
-                    "do I have any messages"                    
+                      "play notifications",
+                      "play my notifications",
+                      "do I have any notifications",
+                      "play messages",
+                      "do I have any messages"
                   ]
               }
           ],

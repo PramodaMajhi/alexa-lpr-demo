@@ -89,7 +89,7 @@ class NotificationQueue {
       if (notification.personal && !context.getAttribute(ATTR.WAS_PIN_ENTERED)) {
         let pronoun = this.length > 1 ? 'them' : 'it'
         context.speakReprompt(`Please tell me your Blue Shield 4-digit pin if you would like to hear ${pronoun} now.`,
-                              'Please say you PIN.')
+                              'Please say your PIN.')
         context.setState(STATE.WAITING_FOR_PIN)
       }
     }

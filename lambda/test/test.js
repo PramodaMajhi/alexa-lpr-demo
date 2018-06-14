@@ -1,14 +1,4 @@
-// in order to run this test, in index.js, change the call to lambda() to a 
-// call to create():
-//
-// Change:
-//      .lambda()
-//    //.create()
-// To:
-//    //.lambda()
-//      .create()
-
-const {handler2} = require('../custom/index')
+const {handler} = require('../custom/index')
 
 let response
 
@@ -77,7 +67,7 @@ const call = async (intent) => {
     event.request.type = 'IntentRequest'
     event.request.intent.name = intent
   }
-  response = await handler2(event, {})
+  response = await handler(event, {})
   console.log(response.response.outputSpeech.ssml)
 }
 
@@ -99,8 +89,8 @@ const test = async () => {
 
   event.session.new = false
   // note: pin slot is already in event
-  console.log("--PIN--")
-  await call('PinIntent')  
+  //console.log("--PIN--")
+  //await call('PinIntent')  
 
   // You have an opthamologist appointment tomorrow at 11:30 AM. Would you like me to set a reminder?
 
