@@ -1,6 +1,8 @@
-// When using the Alexa SDK builder, the call to speak must include all of the speech.
+// When using the Alexa SDK builder, the call to speak() must include all of the speech.
 // However, we want to build up the speach in multiple handlers, so it's best to maintain
-// our own string. The handler is just a wrapper for these common strings, and the attributes.
+// our own string. The Context is just a wrapper for these common strings, and the attributes.
+
+const { ATTR, STATE, CONST } = require('./constants')
 
 class Context {
   constructor() {
@@ -42,11 +44,21 @@ class Context {
   }
 
   setState(value) {
-    this.setAttribute('state', value)
+    this.setAttribute(ATTR.STATE, value)
   }
 
   getState() {
-    return this.getAttribute('state')
+    return this.getAttribute(ATTR.STATE)
+  }
+
+  done() {
+    // if reprompt has been set, then we've asked a question and should not add any more speech
+    return this._reprompt !== ''
+  }
+  
+  card(title, text) {
+    this._cardTitle = title
+    this._cardText = text
   }
 
   getResponse(handlerInput) {

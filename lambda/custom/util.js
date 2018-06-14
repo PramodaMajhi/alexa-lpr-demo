@@ -1,19 +1,18 @@
 const moment = require('./moment-timezone')
+const { ATTR, STATE, CONST } = require('./constants')
 
 const stateIs = (handlerInput, state) => {
   const sessionAttributes = handlerInput.attributesManager.getSessionAttributes()
-  const sessionState = sessionAttributes.state
-  const result = sessionState === state
-  //console.log(`stateIs: session state is ${sessionState}. Looking for ${state}. returning: ${result}`)
+  const sessionState = sessionAttributes[ATTR.STATE]
+  const result = (sessionState === state)
   return result
 }
 
 module.exports.stateIs = stateIs
 
 const intentIs = (handlerInput, intent) => {
-  const result = handlerInput.requestEnvelope.request.type === 'IntentRequest'
+  const result = handlerInput.requestEnvelope.request.type === CONST.INTENT_REQUEST
                  && handlerInput.requestEnvelope.request.intent.name === intent
-  //console.log(`intentIs: ${intent} is returning: ${result}`)
   return result
 }
 

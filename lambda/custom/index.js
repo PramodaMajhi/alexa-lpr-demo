@@ -7,7 +7,7 @@ const { stateIs, intentIs, clearState, greeting, whatNext } = require('./util.js
 const { NotificationQueue, execute } = require('./notifications')
 const { addNotifications } = require('./add-notifications')
 const { Context } = require('./context')
-const { STATE, CONST } = require('./constants')
+const { ATTR, STATE, CONST } = require('./constants')
 
 var queue = new NotificationQueue()
 addNotifications(queue)
@@ -39,39 +39,64 @@ const LaunchRequestHandler = {
   handle(handlerInput) {
     context.speak(`${greeting()} ${CONST.NAME}.`)
     queue.getNotificationNumberText(context)
-    queue.getNotificationText(context)
+    queue.startNotification(handlerInput.requestEnvelope.request, context)
     return context.getResponse(handlerInput)
   }
 }
 
 const PinHandler = {
   canHandle(handlerInput) {
-    return stateIs(handlerInput, WAITING_FOR_PIN) && intentIs(handlerInput, "PinIntent")
+    return stateIs(handlerInput, STATE.WAITING_FOR_PIN) && intentIs(handlerInput, CONST.PIN_INTENT)
   },
-  handle(handlerInput) {
-    let builder = handlerInput.responseBuilder
-
+  handle(handlerInput) {    
     // any 4 digit pin starting with 1 will be accepted
     if (handlerInput.requestEnvelope.request.intent.slots.pin.value[0] !== '1') {
-      return builder
-        .speak(`I'm sorry. That pin is not correct. What can I help you with?`)
-        .reprompt("What next?")
-        .getResponse()
+      context.speakReprompt(`I'm sorry. That pin is not correct. Please say the PIN again.`)
+      return
     }
-
-    handlerInput.attributesManager.setSessionAttributes({ state: ORDER_REFILL })
-    let speechText = `Okay great, that's right. I noticed in your patient health record that you have a prescription
-                      | for ${MED.name}, ready for refill on ${MED.readyDate}.
-                      | It was last refilled at ${PHARMACY.name} at ${PHARMACY.address.street}, ${PHARMACY.address.city}.
-                      | There are ${MED.refillsAvailable} more refills available.
-                      | Would you like me to help you refill this prescription?`.stripMargin()
-    return builder
-      .speak(speechText)
-      .reprompt(`Would you like me to order a refill for ${MED.name} at ${PHARMACY.name} at ${PHARMACY.address.street}?`)
-      .getResponse()
+    context.setAttribute(ATTR.WAS_PIN_ENTERED, true)
+    queue.startNotification(handlerInput.requestEnvelope.request, context)
+    if (! context.done()) {
+      queue.askAboutNextNotification(context)
+    }
+    return context.getResponse(handlerInput)
   }
 }
 
+const NotificationHandler = {
+  canHandle(handlerInput) {
+    return (queue.active() !== null)
+  },
+  handle(handlerInput) {
+    queue.execute(handlerInput.requestEnvelope.request, context)
+    if (! context.done()) {
+      queue.askAboutNextNotification(context)
+    }
+    return context.getResponse(handlerInput)
+  }
+}
+
+const HearNextNotificationHandler = {
+  canHandle(handlerInput) {
+    return stateIs(handlerInput, STATE.HEAR_NEXT_NOTIFICATION)
+  },
+  handle(handlerInput) {
+    if (intentIs(handlerInput, CONST.YES_INTENT)) {
+      queue.startNotification(handlerInput.requestEnvelope.request, context)
+      if (! context.done()) {
+        queue.askAboutNextNotification(context)
+      }
+      return context.getResponse(handlerInput)
+    }
+
+    if (intentIs(handlerInput, CONST.NO_INTENT)) {
+      context.speak("Okay.")
+    }
+  }
+}
+
+
+/*
 const OrderRefillHandler = {
   canHandle(handlerInput) {
     return stateIs(handlerInput, ORDER_REFILL)
@@ -242,6 +267,7 @@ const SpecificRecipeHandler = {
   }
 }
 
+
 const NotificationHandler = {
   canHandle(handlerInput) {
     return stateIs(handlerInput, HEAR_NOTIFICATION)
@@ -263,6 +289,7 @@ const NotificationHandler = {
     }
   }
 }
+*/
 
 const HelpIntentHandler = {
   canHandle(handlerInput) {
@@ -276,7 +303,7 @@ const HelpIntentHandler = {
       .reprompt(speechText)
       .getResponse();
   },
-};
+}
 
 const CancelAndStopIntentHandler = {
   canHandle(handlerInput) {
@@ -292,7 +319,7 @@ const CancelAndStopIntentHandler = {
       .withShouldEndSession(true)
       .getResponse();
   },
-};
+}
 
 const SessionEndedRequestHandler = {
   canHandle(handlerInput) {
@@ -302,7 +329,7 @@ const SessionEndedRequestHandler = {
     console.log(`Session ended with reason: ${handlerInput.requestEnvelope.request.reason}`);
     return handlerInput.responseBuilder.getResponse();
   },
-};
+}
 
 const ErrorHandler = {
   canHandle() {
@@ -324,10 +351,12 @@ exports.handler = (event, context, callback) => {
   const skill = skillBuilder
                 .addRequestHandlers(
                   LaunchRequestHandler,
-                  //SessionEndedRequestHandler,
-                  //CancelAndStopIntentHandler,
-                  //HelpIntentHandler,    
-                  //PinHandler,
+                  PinHandler,
+                  NotificationHandler,
+                  HearNextNotificationHandler,
+                  SessionEndedRequestHandler,
+                  CancelAndStopIntentHandler,
+                  HelpIntentHandler,                  
                   //OrderRefillHandler,
                   //MailOrderHandler,
                   //RecipeHandler,

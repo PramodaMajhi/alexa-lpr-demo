@@ -3,11 +3,14 @@
 //const {addNotifications} = require('../custom/add-notifications')
 const {handler} = require('../custom/index')
 
+let r = null
+
 const callback = (err, resp) => {
   if (err) {
     console.log(`Error: ${JSON.stringify(err, null, 2)}`)
   } else {
     console.log(`Response: ${JSON.stringify(resp, null, 2)}`)
+    r = resp
   }
 }
 
@@ -28,7 +31,18 @@ const event = {
     locale: "en-US",
     timestamp: "2016-10-27T18:21:44Z",
     type: "LaunchRequest",
-    requestId: "amzn1.echo-api.request.[unique-value-here]"
+    requestId: "amzn1.echo-api.request.[unique-value-here]",
+    intent: {
+      name: "AMAZON.YesIntent",
+      confirmationStatus: "NONE",
+      slots: {
+          pin: {
+              name: "pin",
+              value: "1000",
+              confirmationStatus: "NONE"
+          }
+      }
+    }
   },
   context: {
     AudioPlayer: {
@@ -51,3 +65,11 @@ const event = {
 }
 
 handler(event, {}, callback)
+/*
+event.session.new = false
+event.session.attributes = response.sessionAttributes
+event.request.type = "IntentRequest"
+event.request.intent.name = 'PinIntent'
+
+handler(event, {}, callback)
+*/

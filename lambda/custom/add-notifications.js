@@ -1,6 +1,6 @@
 let item1 = {
   type: "appointment",
-  personal: false,
+  personal: true,
   detail: {
     type: 'opthamologist',
     //todo: add logic to convert dates to "today, tomorrow, etc."
