@@ -1,3 +1,5 @@
+const moment = require('./moment-timezone')
+
 let item1 = {
   type: "appointment",
   personal: true,
@@ -17,6 +19,7 @@ let item2 = {
       name: "Metformin",
       refillsAvailable: "2",
       readyDate: "June 13th",
+      readyTime: "3 PM",
       prescriptionNumber: "14724530"
     },
     pharmacy: {
@@ -32,13 +35,14 @@ let item2 = {
   }
 }
 
+item2.detail.med.readyDate = moment().tz("America/Los_Angeles").add(3, 'days').format('MMMM Do')
+
 let item3 = {
   type: "announcement",
   personal: false,
   detail: {
     message: `Okay. Hear is a message from Blue Shield of California.
-              | <audio src="https://s3.amazonaws.com/alexa-blue-image-files/flu.mp3"/>
-              | What next?`.stripMargin()
+              | <audio src="https://s3.amazonaws.com/alexa-blue-image-files/flu.mp3"/>`.stripMargin()
   }
 }
 

@@ -2,7 +2,8 @@ const ATTR = {
   Q_HEAD: 'qHead',
   Q_CURRENT: 'qCurrent',
   STATE: 'state',
-  WAS_PIN_ENTERED: 'WasPINEntered',
+  WAS_PIN_ENTERED: 'wasPINEntered',
+  RECIPE: "recipe"
 }
 
 const CONST = {
@@ -12,23 +13,20 @@ const CONST = {
   YES_INTENT: 'AMAZON.YesIntent',
   NO_INTENT: 'AMAZON.NoIntent',
   PIN_INTENT: 'PinIntent',
+  RECIPE_INTENT: 'RecipeIntent',
+  NOTIFICATIONS_INTENT: 'NotificationsIntent'
 }
 
 const STATE = {
   NULL: '',
   WAITING_FOR_PIN: 'WaitingForPin',
-  SET_REMINDER: 'SetReminder?',
+  SET_APPT_REMINDER: 'SetApptReminder?',
   ORDER_REFILL: 'OrderRefill?',
   HEAR_MORE_ABOUT_MAIL_ORDER: 'HearMoreAboutMailOrder?',
-  CREATE_SCRIP_REMINDER: 'CreateScripReminder?',
-  HEAR_NEXT_NOTIFICATION: 'HearNextNotification'
-
-  //ORDER_REFILL: 'OrderRefill?',
-  //HEAR_MORE_ABOUT_MAIL_ORDER: 'HearMoreAboutMailOrder?',
-  //CREATE_PICKUP_REMINDER: 'CreatePickupReminder?',
-  //CREATE_MEDICATION_REMINDER: 'CreateMedicationReminder?',
-  //HEAR_RECIPE: 'HearRecipe?',
-  //HEAR_NOTIFICATION: 'HearNotification?',
+  CREATE_PICKUP_SCRIP_REMINDER: 'CreatePickupScripReminder?',
+  CREATE_TAKE_SCRIPT_REMINDER: 'CreateTakeScripReminder?',
+  HEAR_NEXT_NOTIFICATION: 'HearNextNotification?',
+  HEAR_RECIPE: 'HearRecipe?',
 }
 
 exports.ATTR = ATTR

@@ -3,8 +3,8 @@
 
 const Alexa = require('ask-sdk-core')
 
-const { stateIs, intentIs, clearState, greeting, whatNext } = require('./util.js')
-const { NotificationQueue, execute } = require('./notifications')
+const { stateIs, intentIs, greeting, whatNext } = require('./util.js')
+const { NotificationQueue } = require('./notifications')
 const { addNotifications } = require('./add-notifications')
 const { Context } = require('./context')
 const { ATTR, STATE, CONST } = require('./constants')
@@ -12,10 +12,11 @@ const { ATTR, STATE, CONST } = require('./constants')
 var queue = new NotificationQueue()
 addNotifications(queue)
 
-var context = new Context()
+var context
 
 const RequestInterceptor = {
   process(handlerInput) {
+    context = new Context()
     // copy the attributes into context
     context.setAttributes(handlerInput.attributesManager.getSessionAttributes())
     // have the queue load the current position from the attributes
@@ -44,34 +45,92 @@ const LaunchRequestHandler = {
   }
 }
 
-const PinHandler = {
+const PlayNotificationsHandler = {
   canHandle(handlerInput) {
-    return stateIs(handlerInput, STATE.WAITING_FOR_PIN) && intentIs(handlerInput, CONST.PIN_INTENT)
+    return intentIs(handlerInput, CONST.NOTIFICATIONS_INTENT)
   },
-  handle(handlerInput) {    
-    // any 4 digit pin starting with 1 will be accepted
-    if (handlerInput.requestEnvelope.request.intent.slots.pin.value[0] !== '1') {
-      context.speakReprompt(`I'm sorry. That pin is not correct. Please say the PIN again.`)
-      return
-    }
-    context.setAttribute(ATTR.WAS_PIN_ENTERED, true)
+  handle(handlerInput) {
     queue.startNotification(handlerInput.requestEnvelope.request, context)
-    if (! context.done()) {
+    if (!context.done()) {
       queue.askAboutNextNotification(context)
     }
     return context.getResponse(handlerInput)
   }
 }
 
-const NotificationHandler = {
+const PinHandler = {
   canHandle(handlerInput) {
-    return (queue.active() !== null)
+    return stateIs(handlerInput, STATE.WAITING_FOR_PIN) && intentIs(handlerInput, CONST.PIN_INTENT)
+  },
+  handle(handlerInput) {
+    // any 4 digit pin starting with 1 will be accepted
+    if (handlerInput.requestEnvelope.request.intent.slots.pin.value[0] !== '1') {
+      context.speakReprompt(`I'm sorry. That pin is not correct. Please say the PIN again.`)
+      return context.getResponse(handlerInput)
+    }
+    context.setAttribute(ATTR.WAS_PIN_ENTERED, true)
+    queue.startNotification(handlerInput.requestEnvelope.request, context)
+    if (!context.done()) {
+      queue.askAboutNextNotification(context)
+    }
+    return context.getResponse(handlerInput)
+  }
+}
+
+const NotificationExecutionHandler = {
+  canHandle(handlerInput) {
+    let currentNotification = queue.active()
+    return (currentNotification !== null)
   },
   handle(handlerInput) {
     queue.execute(handlerInput.requestEnvelope.request, context)
-    if (! context.done()) {
+    if (!context.done()) {
       queue.askAboutNextNotification(context)
     }
+    return context.getResponse(handlerInput)
+  }
+}
+
+const RecipeHandler = {
+  canHandle(handlerInput) {
+    return intentIs(handlerInput, CONST.RECIPE_INTENT)
+  },
+  handle(handlerInput) {
+    // diabetes intentionally misspelled to help pronunciation without going phonetic
+    let speech = `Okay. You patient health record recommends eating a low-sugar diet.
+                  | I have a few recipes recommended by the American Diabetease Association.
+                  | Would you like the recipe for Sweet and Savory Spiralized Zucchini Noodles?`.stripMargin()
+
+    context.speakReprompt(speech, 'Want the recipe for Sweet and Savory Spiralized Zucchini Noodles?')
+
+    context.setState(STATE.HEAR_RECIPE)
+    context.setAttribute(ATTR.RECIPE, 'Sweet and Savory Spiralized Zucchini Noodles')
+
+    return context.getResponse(handlerInput)
+  }
+}
+
+const SpecificRecipeHandler = {
+  canHandle(handlerInput) {
+    return stateIs(handlerInput, STATE.HEAR_RECIPE)
+  },
+  handle(handlerInput) {
+    if (intentIs(handlerInput, "AMAZON.YesIntent")) {
+      context.speak("Okay. I've sent a card with the recipe on it and I've added the ingredients to your Alexa shopping list.")
+
+      let cardText = `1 Zucchini
+                      |1 Savory sauce
+                      |
+                      |Spiralize the Zucchini into noodles
+                      |Add the sauce`.stripMargin()
+
+      context.card(context.getAttribute(ATTR.RECIPE), cardText)
+    } else {
+      context.speak("As you wish!")
+    }
+      
+    queue.askAboutNextNotification(context)
+
     return context.getResponse(handlerInput)
   }
 }
@@ -83,213 +142,23 @@ const HearNextNotificationHandler = {
   handle(handlerInput) {
     if (intentIs(handlerInput, CONST.YES_INTENT)) {
       queue.startNotification(handlerInput.requestEnvelope.request, context)
-      if (! context.done()) {
+      if (!context.done()) {
         queue.askAboutNextNotification(context)
-      }
-      return context.getResponse(handlerInput)
-    }
-
-    if (intentIs(handlerInput, CONST.NO_INTENT)) {
+      }      
+    } else if (intentIs(handlerInput, CONST.NO_INTENT)) {
       context.speak("Okay.")
-    }
-  }
-}
-
-
-/*
-const OrderRefillHandler = {
-  canHandle(handlerInput) {
-    return stateIs(handlerInput, ORDER_REFILL)
-  },
-  handle(handlerInput) {
-    let builder = handlerInput.responseBuilder
-
-    if (intentIs(handlerInput, "AMAZON.YesIntent")) {
-      handlerInput.attributesManager.setSessionAttributes({ state: HEAR_MORE_ABOUT_MAIL_ORDER })
-      let speechText = `Okay. This prescription will be refilled at the same location. 
-                        | But, since this is a routine prescription, you might want to change your prescription
-                        | to a mail order pharmacy. Would you like to hear more about this?`.stripMargin()
-      return builder
-        .speak(speechText)
-        .reprompt("Would you like to hear more about mail order prescriptions?")
-        .getResponse()
-    }
-
-    return builder
-      .speak("Ok. Goodbye.")
-      .withShouldEndSession(true)
-      .getResponse()
-  }
-}
-
-const MailOrderHandler = {
-  canHandle(handlerInput) {
-    return stateIs(handlerInput, HEAR_MORE_ABOUT_MAIL_ORDER)
-  },
-  handle(handlerInput) {
-    let builder = handlerInput.responseBuilder
-
-    let speechText = ''
-
-    if (intentIs(handlerInput, "AMAZON.YesIntent")) {
-      speechText += `Please sit back and listen to a story of the wonders of mail order pharmacies. 
-                     | Just kidding. I'm not programmed for that yet. `.stripMargin()
-    }
-
-    speechText += `I've placed your refill order and it should be ready for pickup on ${MED.readyDate}.
-                   | I've also sent a card with the pharmacy address and prescription information.
-                   | Would you like me to create a reminder for ${MED.readyDate} to pick up the prescription?`.stripMargin()
-
-    let cardText = `Your refill prescription for ${MED.name} should be ready on ${MED.readyDate} at:
-                    |${PHARMACY.name}
-                    |${PHARMACY.address.street}
-                    |${PHARMACY.address.city}, ${PHARMACY.address.state}, ${PHARMACY.address.zip}
-                    |
-                    |Phone: ${PHARMACY.phone}
-                    |
-                    |Your prescription number is: ${MED.prescriptionNumber}`.stripMargin()
-
-    handlerInput.attributesManager.setSessionAttributes({ state: CREATE_PICKUP_REMINDER })
-
-    return builder
-      .speak(speechText)
-      .reprompt("Would you like me to create a reminder to pick up the prescription?")
-      .withSimpleCard("Prescription", cardText)
-      .getResponse()
-  }
-}
-
-const CreatePickupReminderHandler = {
-  canHandle(handlerInput) {
-    return stateIs(handlerInput, CREATE_PICKUP_REMINDER)
-  },
-  handle(handlerInput) {
-    let builder = handlerInput.responseBuilder
-
-    let speechText
-
-    if (intentIs(handlerInput, "AMAZON.YesIntent")) {
-      speechText = "OK, I've created a reminder to pick up the prescription."
+      context.speakReprompt(whatNext(), "What next?")
+      context.setState(STATE.NULL)
     } else {
-      speechText = "Ok."
+      // if user has another intent, that handler should match first
+      let speech = `Hmm. I didn't get that. Please say yes or no or make another request. 
+                    | Would you like to hear the next notification?`.stripMargin()
+      context.speakReprompt(speech, "Do you want to hear the next notification?")
     }
 
-    speechText += " I see you should take this medicine twice per day. Would you like me to create reminders for you each morning and evening?"
-
-    handlerInput.attributesManager.setSessionAttributes({ state: CREATE_MEDICATION_REMINDER })
-
-    return builder
-      .speak(speechText)
-      .reprompt("Would you like me to create medication reminders for you?")
-      .getResponse();
+    return context.getResponse(handlerInput)
   }
 }
-
-const CreateMedicationReminderHandler = {
-  canHandle(handlerInput) {
-    return stateIs(handlerInput, CREATE_MEDICATION_REMINDER)
-  },
-  handle(handlerInput) {
-    let builder = handlerInput.responseBuilder
-
-    let speechText
-
-    if (intentIs(handlerInput, "AMAZON.YesIntent")) {
-      speechText = "OK, I've created a medication reminder for you."
-    } else {
-      speechText = "Ok."
-    }
-
-    speechText += " What can I help you with next?"
-
-    handlerInput.attributesManager.setSessionAttributes({ state: '' })
-
-    return builder
-      .speak(speechText)
-      .reprompt("What next?")
-      .getResponse()
-  }
-}
-
-const RecipeHandler = {
-  canHandle(handlerInput) {
-    return intentIs(handlerInput, "RecipeIntent")
-  },
-  handle(handlerInput) {
-    let builder = handlerInput.responseBuilder
-
-    // diabetes intentionally misspelled to help pronunciation without going phonetic
-    let speechText = `Okay. You patient health record recommends eating a low-sugar diet.
-                      | I have a few recipes recommended by the American Diabetease Association.
-                      | Would you like the recipe for Sweet and Savory Spiralized Zucchini Noodles?`.stripMargin()
-
-    handlerInput.attributesManager.setSessionAttributes({ state: HEAR_RECIPE, recipe: 'SweetAndSavorySpiralizedZucchiniNoodles' })
-
-    return builder
-      .speak(speechText)
-      .reprompt('Want the recipe for Sweet and Savory Spiralized Zucchini Noodles?')
-      .getResponse();
-  }
-}
-
-const SpecificRecipeHandler = {
-  canHandle(handlerInput) {
-    return stateIs(handlerInput, HEAR_RECIPE)
-  },
-  handle(handlerInput) {
-    let builder = handlerInput.responseBuilder
-
-    handlerInput.attributesManager.setSessionAttributes({ state: HEAR_NOTIFICATION })
-
-    if (intentIs(handlerInput, "AMAZON.YesIntent")) {
-      let speechText = `Okay. I've sent a card with the recipe on it and I've added the ingredients to your Alexa shopping list.
-                        | You have one more notification. Would you like to hear it?`.stripMargin()
-
-      let cardText = `1 Zucchini
-                      |1 Savory sauce
-                      |
-                      |Spiralize the Zucchini into noodles
-                      |Add the sauce`.stripMargin()
-
-      return builder
-        .speak(speechText)
-        .reprompt("Would you like to hear the notification?")
-        .withSimpleCard("Savory Spiralized Zucchini Noodles", cardText)
-        .getResponse()
-    }
-
-    let speechText = `Okay. You have one more notification. Would you like to hear it?`
-
-    return builder
-      .speak(speechText)
-      .reprompt("Would you like to hear it?")
-      .getResponse()
-  }
-}
-
-
-const NotificationHandler = {
-  canHandle(handlerInput) {
-    return stateIs(handlerInput, HEAR_NOTIFICATION)
-  },
-  handle(handlerInput) {
-    let builder = handlerInput.responseBuilder
-
-    if (intentIs(handlerInput, "AMAZON.YesIntent")) {
-      let speechText = `Okay. Hear is a message from Blue Shield of California.
-                        | <audio src="https://s3.amazonaws.com/alexa-blue-image-files/flu.mp3"/>
-                        | What next?`.stripMargin()
-
-      clearState(handlerInput)
-
-      return builder
-        .speak(speechText)
-        .reprompt("What next?")
-        .getResponse()
-    }
-  }
-}
-*/
 
 const HelpIntentHandler = {
   canHandle(handlerInput) {
@@ -345,29 +214,38 @@ const ErrorHandler = {
   },
 }
 
-exports.handler = (event, context, callback) => {
-  console.log(`REQUEST: ${JSON.stringify(event, null, 2)}`)
+const configureBuilder = () => {
   const skillBuilder = Alexa.SkillBuilders.custom()
-  const skill = skillBuilder
-                .addRequestHandlers(
-                  LaunchRequestHandler,
-                  PinHandler,
-                  NotificationHandler,
-                  HearNextNotificationHandler,
-                  SessionEndedRequestHandler,
-                  CancelAndStopIntentHandler,
-                  HelpIntentHandler,                  
-                  //OrderRefillHandler,
-                  //MailOrderHandler,
-                  //RecipeHandler,
-                  //SpecificRecipeHandler,
-                  //NotificationHandler,
-                  //CreatePickupReminderHandler,
-                  //CreateMedicationReminderHandler
-                )
-                .addRequestInterceptors(RequestInterceptor)
-                .addResponseInterceptors(ResponseInterceptor)
-                .addErrorHandlers(ErrorHandler)
-                .lambda()
-  skill(event, context, callback)  
+  skillBuilder
+    .addRequestHandlers(
+      SessionEndedRequestHandler,
+      CancelAndStopIntentHandler,
+      HelpIntentHandler,
+      LaunchRequestHandler,
+      PinHandler,
+      RecipeHandler,
+      SpecificRecipeHandler,
+      PlayNotificationsHandler,
+      NotificationExecutionHandler,
+      HearNextNotificationHandler
+    )
+    .addRequestInterceptors(RequestInterceptor)
+    .addResponseInterceptors(ResponseInterceptor)
+    .addErrorHandlers(ErrorHandler)
+
+  return skillBuilder
+}
+
+exports.handler = configureBuilder().lambda()
+
+// this handler enables the skill to be invoked repeatedly without creating a new skill
+// it also returns the result rather than calling the callback provided by AWS lambda
+let skill
+exports.handler2 = async (event, context) => {
+  if (! skill) {
+    skill = configureBuilder().create()
+  }
+  
+  let response = skill.invoke(event, context)
+  return response  
 }
