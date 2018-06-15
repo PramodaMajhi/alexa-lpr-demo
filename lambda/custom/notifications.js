@@ -26,9 +26,11 @@ class NotificationQueue {
     if (this.current === undefined) {
       this.current = -1
     }
+    console.log(`============= Queue after load: head: ${this.head} current: ${this.current}`)
   }
 
   saveTo(context) {
+    console.log(`============= Queue before save: head: ${this.head} current: ${this.current}`)
     context.setAttribute(ATTR.Q_HEAD, this.head)
     context.setAttribute(ATTR.Q_CURRENT, this.current)
   }
@@ -43,6 +45,7 @@ class NotificationQueue {
       this.head++
       return
     }
+    console.log(`============= Queue before next() failure: head: ${this.head} current: ${this.current}`)
     throw new Error("Tried to next() an empty notification queue.")
   }
 
@@ -285,7 +288,7 @@ const refillList = (item) => {
         intent: CONST.YES_INTENT
       },
       then: {
-        speak: 'Mail order pharmacies are <emphasis level="strong">great!</emphasis>.',
+        speak: 'Mail order pharmacies are great.',
         jump: '3ae27b6d'
       },
     },

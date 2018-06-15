@@ -35,13 +35,19 @@ let item2 = {
   }
 }
 
-item2.detail.med.readyDate = moment().tz("America/Los_Angeles").add(3, 'days').format('MMMM Do')
+// Set the prescription ready date to 3 days in the future 
+// from the current date in the PxT time zone, 
+// in the format like "June 18th"
+item2.detail.med.readyDate = moment()
+                              .tz("America/Los_Angeles")
+                              .add(3, 'days')
+                              .format('MMMM Do')
 
 let item3 = {
   type: "announcement",
   personal: false,
   detail: {
-    message: `Okay. Hear is a message from Blue Shield of California.
+    message: `Okay. Here is a message from Blue Shield of California.
               | <audio src="https://s3.amazonaws.com/alexa-blue-image-files/flu.mp3"/>`.stripMargin()
   }
 }

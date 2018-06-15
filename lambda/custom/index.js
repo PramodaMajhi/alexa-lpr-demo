@@ -38,9 +38,8 @@ const LaunchRequestHandler = {
     return handlerInput.requestEnvelope.request.type === CONST.LAUNCH_REQUEST
   },
   handle(handlerInput) {
-    // Alexa is having a serious problem recognizing PINS right now
-    // I even tried it on older projects that have been used for months, and the PIN intent (AMAZON.FOUR_DIGIT_NUMBER)
-    // is not recognized.
+    // Alexa is having a serious problem recognizing PINS right now. I even tried it on older projects
+    // that have been used for months, and the PIN intent (AMAZON.FOUR_DIGIT_NUMBER) is not recognized.
     // This is temporary
     context.setAttribute(ATTR.WAS_PIN_ENTERED, true)
 

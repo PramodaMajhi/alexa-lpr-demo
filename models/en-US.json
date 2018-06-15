@@ -17,7 +17,12 @@
               },
               {
                   "name": "AMAZON.YesIntent",
-                  "samples": []
+                  "samples": [
+                      "yes that sounds marvelous",
+                      "yes that sounds fantastic",
+                      "yes that sounds perfect",
+                      "yes that sounds delicious"
+                  ]
               },
               {
                   "name": "AMAZON.NoIntent",
