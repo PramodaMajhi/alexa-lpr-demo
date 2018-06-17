@@ -1,9 +1,17 @@
-import * as Alexa from 'ask-sdk-core'
+// for every line of a multi-line string, remove the characters fom the beginning of the line to the pipe character
+String.prototype.stripMargin = function () {
+  return this.replace(/^.*\|/gm, '')
+}
 
-import { greeting } from './utils.js'
+import * as Alexa from 'ask-sdk-core'
+import { RequestEnvelope, IntentRequest, SessionEndedRequest } from 'ask-sdk-model'
 import { Context } from './context'
-import { ATTR_WAS_PIN_ENTERED, NAME, LAUNCH_REQUEST } from './constants'
-import { RequestEnvelope } from 'ask-sdk-model';
+import { greeting, stateIs, intentIs, whatNext } from './utils.js'
+import {
+  ATTR_WAS_PIN_ENTERED, NAME, LAUNCH_REQUEST, ATTR_Q_CURRENT, STATE_HEAR_NEXT_NOTIFICATION,
+  YES_INTENT, NO_INTENT, STATE_NULL, RECIPE_INTENT, STATE_HEAR_RECIPE, ATTR_RECIPE,
+  NOTIFICATIONS_INTENT, STATE_WAITING_FOR_PIN, PIN_INTENT
+} from './constants'
 
 const CreateContext = (handlerInput: Alexa.HandlerInput) => {
   // Context holds a queue, but we can't initialize the queue from the Context
@@ -13,7 +21,7 @@ const CreateContext = (handlerInput: Alexa.HandlerInput) => {
   return context
 }
 
-const LaunchRequestHandler : Alexa.RequestHandler = {
+const LaunchRequestHandler: Alexa.RequestHandler = {
   canHandle(handlerInput) {
     return handlerInput.requestEnvelope.request.type === LAUNCH_REQUEST
   },
@@ -32,44 +40,46 @@ const LaunchRequestHandler : Alexa.RequestHandler = {
   }
 }
 
-/*
-const PlayNotificationsHandler : Alexa.RequestHandler= {
+const PlayNotificationsHandler: Alexa.RequestHandler = {
   canHandle(handlerInput) {
-    return intentIs(handlerInput, CONST.NOTIFICATIONS_INTENT)
+    return intentIs(handlerInput, NOTIFICATIONS_INTENT)
   },
   handle(handlerInput) {
-    queue.getNotificationNumberText(context)
-    queue.startNotification(handlerInput.requestEnvelope.request, context)
-    if (!context.done()) {
-      queue.askAboutNextNotification(context)
+    let context = CreateContext(handlerInput)
+    context.queue.getNotificationNumberText()
+    context.queue.startNotification()
+    if (!context.isDone()) {
+      context.queue.askAboutNextNotification()
     }
-    return context.getResponse(handlerInput)
+    return context.getResponse()
   }
 }
 
-const PinHandler = {
-  canHandle(handlerInput: ) {
-    return stateIs(handlerInput, STATE.WAITING_FOR_PIN) && intentIs(handlerInput, CONST.PIN_INTENT)
+const PinHandler: Alexa.RequestHandler = {
+  canHandle(handlerInput) {
+    return stateIs(handlerInput, STATE_WAITING_FOR_PIN) && intentIs(handlerInput, PIN_INTENT)
   },
-  handle(handlerInput: ) {
+  handle(handlerInput) {
+    let context = CreateContext(handlerInput)
     // any 4 digit pin starting with 1 will be accepted
-    if (handlerInput.requestEnvelope.request.intent.slots.pin.value[0] !== '1') {
-      context.speakReprompt(`I'm sorry. That pin is not correct. Please say the PIN again.`)
-      return context.getResponse(handlerInput)
+    let intent = (<IntentRequest>handlerInput.requestEnvelope.request).intent
+    if (intent && intent.slots && intent.slots.pin.value[0] !== '1') {
+      context.speakReprompt("I'm sorry. That pin is not correct. Please say the PIN again.", "Please say the PIN again")
+      return context.getResponse()
     }
-    context.setAttribute(ATTR.WAS_PIN_ENTERED, true)
-    queue.startNotification(handlerInput.requestEnvelope.request, context)
-    if (!context.done()) {
-      queue.askAboutNextNotification(context)
+    context.setAttribute(ATTR_WAS_PIN_ENTERED, true)
+    context.queue.startNotification()
+    if (!context.isDone()) {
+      context.queue.askAboutNextNotification()
     }
-    return context.getResponse(handlerInput)
+    return context.getResponse()
   }
 }
-*/
-// this handler should be last
-const NotificationExecutionHandler : Alexa.RequestHandler = {
+
+const NotificationExecutionHandler: Alexa.RequestHandler = {
   canHandle(handlerInput) {
-    return true
+    let attributes = handlerInput.attributesManager.getSessionAttributes()
+    return (ATTR_Q_CURRENT in attributes && attributes[ATTR_Q_CURRENT] !== "-1")
   },
   handle(handlerInput) {
     let context = CreateContext(handlerInput)
@@ -80,32 +90,34 @@ const NotificationExecutionHandler : Alexa.RequestHandler = {
     return context.getResponse()
   }
 }
-/*
-const RecipeHandler = {
-  canHandle(handlerInput: ) {
-    return intentIs(handlerInput, CONST.RECIPE_INTENT)
+
+const RecipeHandler: Alexa.RequestHandler = {
+  canHandle(handlerInput) {
+    return intentIs(handlerInput, RECIPE_INTENT)
   },
-  handle(handlerInput: ) {
+  handle(handlerInput) {
+    let context = CreateContext(handlerInput)
     // diabetes intentionally misspelled to help pronunciation without going phonetic
     let speech = `Okay. You patient health record recommends eating a low-sugar diet.
-                  | I have a few recipes recommended by the American Diabetease Association.
+                  | I have a few recipes recommended by the American Diabetez Association.
                   | Would you like the recipe for Sweet and Savory Spiralized Zucchini Noodles?`.stripMargin()
 
     context.speakReprompt(speech, 'Want the recipe for Sweet and Savory Spiralized Zucchini Noodles?')
 
-    context.setState(STATE.HEAR_RECIPE)
-    context.setAttribute(ATTR.RECIPE, 'Sweet and Savory Spiralized Zucchini Noodles')
+    context.setState(STATE_HEAR_RECIPE)
+    context.setAttribute(ATTR_RECIPE, 'Sweet and Savory Spiralized Zucchini Noodles')
 
-    return context.getResponse(handlerInput)
+    return context.getResponse()
   }
 }
 
-const SpecificRecipeHandler = {
-  canHandle(handlerInput: ) {
-    return stateIs(handlerInput, STATE.HEAR_RECIPE)
+const SpecificRecipeHandler: Alexa.RequestHandler = {
+  canHandle(handlerInput) {
+    return stateIs(handlerInput, STATE_HEAR_RECIPE)
   },
-  handle(handlerInput: ) {
-    if (intentIs(handlerInput, "AMAZON.YesIntent")) {
+  handle(handlerInput) {
+    let context = CreateContext(handlerInput)
+    if (intentIs(handlerInput, YES_INTENT)) {
       context.speak("Okay. I've sent a card with the recipe on it and I've added the ingredients to your Alexa shopping list.")
 
       let cardText = `1 Zucchini
@@ -114,31 +126,32 @@ const SpecificRecipeHandler = {
                       |Spiralize the Zucchini into noodles
                       |Add the sauce`.stripMargin()
 
-      context.card(context.getAttribute(ATTR.RECIPE), cardText)
+      context.card({ title: context.getStringAttribute(ATTR_RECIPE), text: cardText })
     } else {
       context.speak("As you wish!")
     }
 
-    queue.askAboutNextNotification(context)
+    context.queue.askAboutNextNotification()
 
-    return context.getResponse(handlerInput)
+    return context.getResponse()
   }
 }
 
-const HearNextNotificationHandler = {
+const HearNextNotificationHandler: Alexa.RequestHandler = {
   canHandle(handlerInput) {
-    return stateIs(handlerInput, STATE.HEAR_NEXT_NOTIFICATION)
+    return stateIs(handlerInput, STATE_HEAR_NEXT_NOTIFICATION)
   },
   handle(handlerInput) {
-    if (intentIs(handlerInput, CONST.YES_INTENT)) {
-      queue.startNotification(handlerInput.requestEnvelope.request, context)
-      if (!context.done()) {
-        queue.askAboutNextNotification(context)
+    let context = CreateContext(handlerInput)
+    if (intentIs(handlerInput, YES_INTENT)) {
+      context.queue.startNotification()
+      if (!context.isDone()) {
+        context.queue.askAboutNextNotification()
       }
-    } else if (intentIs(handlerInput, CONST.NO_INTENT)) {
+    } else if (intentIs(handlerInput, NO_INTENT)) {
       context.speak("Okay.")
       context.speakReprompt(whatNext(), "What next?")
-      context.setState(STATE.NULL)
+      context.setState(STATE_NULL)
     } else {
       // if user has another intent, that handler should match first
       let speech = `Hmm. I didn't get that. Please say yes or no or make another request. 
@@ -146,11 +159,11 @@ const HearNextNotificationHandler = {
       context.speakReprompt(speech, "Do you want to hear the next notification?")
     }
 
-    return context.getResponse(handlerInput)
+    return context.getResponse()
   }
 }
 
-const HelpIntentHandler = {
+const HelpIntentHandler: Alexa.RequestHandler = {
   canHandle(handlerInput) {
     return intentIs(handlerInput, 'AMAZON.HelpIntent');
   },
@@ -161,10 +174,10 @@ const HelpIntentHandler = {
       .speak(speechText)
       .reprompt(speechText)
       .getResponse();
-  },
+  }
 }
 
-const CancelAndStopIntentHandler = {
+const CancelAndStopIntentHandler: Alexa.RequestHandler = {
   canHandle(handlerInput) {
     return handlerInput.requestEnvelope.request.type === 'IntentRequest'
       && (handlerInput.requestEnvelope.request.intent.name === 'AMAZON.CancelIntent'
@@ -177,19 +190,19 @@ const CancelAndStopIntentHandler = {
       .speak(speechText)
       .withShouldEndSession(true)
       .getResponse();
-  },
+  }
 }
 
-const SessionEndedRequestHandler = {
+const SessionEndedRequestHandler: Alexa.RequestHandler = {
   canHandle(handlerInput) {
     return handlerInput.requestEnvelope.request.type === 'SessionEndedRequest';
   },
   handle(handlerInput) {
-    console.log(`Session ended with reason: ${handlerInput.requestEnvelope.request.reason}`);
+    console.log(`Session ended with reason: ${(<SessionEndedRequest>handlerInput.requestEnvelope.request).reason}`);
     return handlerInput.responseBuilder.getResponse();
-  },
+  }
 }
-*/
+
 const ErrorHandler = {
   canHandle() {
     return true;
@@ -204,27 +217,27 @@ const ErrorHandler = {
   },
 }
 
-const configureBuilder = () : Alexa.CustomSkillBuilder => {
+const configureBuilder = (): Alexa.CustomSkillBuilder => {
   const skillBuilder = Alexa.SkillBuilders.custom()
   skillBuilder
     .addRequestHandlers(
-      //SessionEndedRequestHandler,
-      //CancelAndStopIntentHandler,
-      //HelpIntentHandler,
+      SessionEndedRequestHandler,
+      CancelAndStopIntentHandler,
+      HelpIntentHandler,
       LaunchRequestHandler,
-      //PinHandler,
-      //RecipeHandler,
-      //SpecificRecipeHandler,
-      //PlayNotificationsHandler,
-      //HearNextNotificationHandler,
+      PinHandler,
+      RecipeHandler,
+      SpecificRecipeHandler,
+      PlayNotificationsHandler,
+      HearNextNotificationHandler,
       NotificationExecutionHandler,
-    )
+  )
     .addErrorHandlers(ErrorHandler)
 
   return skillBuilder
 }
 
-let skill : Alexa.Skill
+let skill: Alexa.Skill
 
 exports.handler = async (event: RequestEnvelope, context: any, callback: (err: Error | null, result?: any) => void) => {
   //console.log(`EVENT: ${JSON.stringify(event, null, 2)}`)
@@ -235,7 +248,7 @@ exports.handler = async (event: RequestEnvelope, context: any, callback: (err: E
 
   try {
     let response = await skill.invoke(event, context)
-    //console.log(`RESPONSE: ${JSON.stringify(response, null, 2)}`)
+    // console.log(`RESPONSE: ${JSON.stringify(response, null, 2)}`)
     if (callback) {
       callback(null, response)
     }
@@ -244,6 +257,7 @@ exports.handler = async (event: RequestEnvelope, context: any, callback: (err: E
     console.log(`ERROR: ${err}`)
     if (callback) {
       callback(err, null)
+      return null
     } else {
       throw err
     }

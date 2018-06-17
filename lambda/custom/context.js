@@ -71,6 +71,7 @@ class Context {
         return this._reprompt !== '';
     }
     getResponse() {
+        this.queue.saveState(this._attributes);
         this._handlerInput.attributesManager.setSessionAttributes(this.getAttributes());
         let builder = this._handlerInput.responseBuilder;
         if (this._speak) {
@@ -89,3 +90,4 @@ class Context {
     }
 }
 exports.Context = Context;
+//# sourceMappingURL=context.js.map

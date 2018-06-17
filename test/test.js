@@ -1,4 +1,4 @@
-const {handler} = require('../index')
+const {handler} = require('../custom/index')
 
 let response
 
@@ -112,13 +112,13 @@ const test = async () => {
   // But, since this is a routine prescription, you might want to change your prescription
   // to a mail order pharmacy. Would you like to hear more about this?
 
-  await no()
+  await yes()
 
   // Okay. I've placed your refill order and it should be ready for pickup on June 13th.
   // I've also sent a card with the pharmacy address and prescription information.
   // Would you like me to create a reminder for June 13th to pick up the prescription?
 
-  await no()
+  await yes()
 
   // Okay, great. Your reminder is set for June 17th at 3 PM. I also see you should take this medicine 2 times per day. 
   // Would you like me to remind you each morning and evening?
@@ -142,7 +142,12 @@ const test = async () => {
 
   await yes()
   
-  console.log(JSON.stringify(response, null, 2))
+  // Here is a message from Blue Shield of California. <audio src="https://s3.amazonaws.com/alexa-blue-image-files/flu.mp3"/> 
+  // <break time="100ms"/>There are no more notifications. What can I help you with next?</speak
+  //console.log(JSON.stringify(response, null, 2))
+
+  console.log("--STOP--")
+  await call('AMAZON.StopIntent')
 }
 
 test()

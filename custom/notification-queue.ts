@@ -1,16 +1,12 @@
-import { Request, IntentRequest } from 'ask-sdk-model';
+import { IntentRequest } from 'ask-sdk-model';
 import { AlexaNotification, notificationList, NotificationType } from './notification-data'
-import { Rule, getRules, When, Then } from './notification-language'
+import { Rule, getRules, When } from './notification-language'
 import { Context } from './context'
+import { whatNext } from './utils'
 import {
-  ATTR_Q_FRONT,
-  ATTR_Q_CURRENT,
-  STATE_NULL,
-  ATTR_WAS_PIN_ENTERED,
-  STATE_WAITING_FOR_PIN,
-  STATE_HEAR_NEXT_NOTIFICATION
+  ATTR_Q_FRONT, ATTR_Q_CURRENT, STATE_NULL, ATTR_WAS_PIN_ENTERED, 
+  STATE_WAITING_FOR_PIN, STATE_HEAR_NEXT_NOTIFICATION
 } from './constants'
-import { whatNext } from './utils';
 
 
 export class NotificationQueue {
@@ -32,7 +28,7 @@ export class NotificationQueue {
 
   loadState() {
     this._front = this._context.getNumericAttribute(ATTR_Q_FRONT, 0)
-    this._current = this._context.getNumericAttribute(ATTR_Q_FRONT, -1)
+    this._current = this._context.getNumericAttribute(ATTR_Q_CURRENT, -1)
   }
 
   saveState(attributes: { [s: string]: string }) {

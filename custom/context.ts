@@ -67,6 +67,7 @@ export class Context {
   card(card: Card) {
     this._card = card
   }
+
   speakReprompt(text: string, reprompt: string) {
     this.speak(text)
     this.reprompt(reprompt)
@@ -116,6 +117,8 @@ export class Context {
   }
 
   getResponse() : Response {
+    // save the state of the queue to the attributes
+    this.queue.saveState(this._attributes)
     // save the attributes back to the session
     this._handlerInput.attributesManager.setSessionAttributes(this.getAttributes())
 

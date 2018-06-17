@@ -1,15 +1,11 @@
 "use strict";
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
-    result["default"] = mod;
-    return result;
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-const Alexa = __importStar(require("ask-sdk-core"));
-const utils_js_1 = require("./utils.js");
+String.prototype.stripMargin = function () {
+    return this.replace(/^.*\|/gm, '');
+};
+const Alexa = require("ask-sdk-core");
 const context_1 = require("./context");
+const utils_js_1 = require("./utils.js");
 const constants_1 = require("./constants");
 const CreateContext = (handlerInput) => {
     let context = new context_1.Context(handlerInput);
@@ -29,9 +25,43 @@ const LaunchRequestHandler = {
         return context.getResponse();
     }
 };
+const PlayNotificationsHandler = {
+    canHandle(handlerInput) {
+        return utils_js_1.intentIs(handlerInput, constants_1.NOTIFICATIONS_INTENT);
+    },
+    handle(handlerInput) {
+        let context = CreateContext(handlerInput);
+        context.queue.getNotificationNumberText();
+        context.queue.startNotification();
+        if (!context.isDone()) {
+            context.queue.askAboutNextNotification();
+        }
+        return context.getResponse();
+    }
+};
+const PinHandler = {
+    canHandle(handlerInput) {
+        return utils_js_1.stateIs(handlerInput, constants_1.STATE_WAITING_FOR_PIN) && utils_js_1.intentIs(handlerInput, constants_1.PIN_INTENT);
+    },
+    handle(handlerInput) {
+        let context = CreateContext(handlerInput);
+        let intent = handlerInput.requestEnvelope.request.intent;
+        if (intent && intent.slots && intent.slots.pin.value[0] !== '1') {
+            context.speakReprompt("I'm sorry. That pin is not correct. Please say the PIN again.", "Please say the PIN again");
+            return context.getResponse();
+        }
+        context.setAttribute(constants_1.ATTR_WAS_PIN_ENTERED, true);
+        context.queue.startNotification();
+        if (!context.isDone()) {
+            context.queue.askAboutNextNotification();
+        }
+        return context.getResponse();
+    }
+};
 const NotificationExecutionHandler = {
     canHandle(handlerInput) {
-        return true;
+        let attributes = handlerInput.attributesManager.getSessionAttributes();
+        return (constants_1.ATTR_Q_CURRENT in attributes && attributes[constants_1.ATTR_Q_CURRENT] !== "-1");
     },
     handle(handlerInput) {
         let context = CreateContext(handlerInput);
@@ -40,6 +70,103 @@ const NotificationExecutionHandler = {
             context.queue.askAboutNextNotification();
         }
         return context.getResponse();
+    }
+};
+const RecipeHandler = {
+    canHandle(handlerInput) {
+        return utils_js_1.intentIs(handlerInput, constants_1.RECIPE_INTENT);
+    },
+    handle(handlerInput) {
+        let context = CreateContext(handlerInput);
+        let speech = `Okay. You patient health record recommends eating a low-sugar diet.
+                  | I have a few recipes recommended by the American Diabetez Association.
+                  | Would you like the recipe for Sweet and Savory Spiralized Zucchini Noodles?`.stripMargin();
+        context.speakReprompt(speech, 'Want the recipe for Sweet and Savory Spiralized Zucchini Noodles?');
+        context.setState(constants_1.STATE_HEAR_RECIPE);
+        context.setAttribute(constants_1.ATTR_RECIPE, 'Sweet and Savory Spiralized Zucchini Noodles');
+        return context.getResponse();
+    }
+};
+const SpecificRecipeHandler = {
+    canHandle(handlerInput) {
+        return utils_js_1.stateIs(handlerInput, constants_1.STATE_HEAR_RECIPE);
+    },
+    handle(handlerInput) {
+        let context = CreateContext(handlerInput);
+        if (utils_js_1.intentIs(handlerInput, constants_1.YES_INTENT)) {
+            context.speak("Okay. I've sent a card with the recipe on it and I've added the ingredients to your Alexa shopping list.");
+            let cardText = `1 Zucchini
+                      |1 Savory sauce
+                      |
+                      |Spiralize the Zucchini into noodles
+                      |Add the sauce`.stripMargin();
+            context.card({ title: context.getStringAttribute(constants_1.ATTR_RECIPE), text: cardText });
+        }
+        else {
+            context.speak("As you wish!");
+        }
+        context.queue.askAboutNextNotification();
+        return context.getResponse();
+    }
+};
+const HearNextNotificationHandler = {
+    canHandle(handlerInput) {
+        return utils_js_1.stateIs(handlerInput, constants_1.STATE_HEAR_NEXT_NOTIFICATION);
+    },
+    handle(handlerInput) {
+        let context = CreateContext(handlerInput);
+        if (utils_js_1.intentIs(handlerInput, constants_1.YES_INTENT)) {
+            context.queue.startNotification();
+            if (!context.isDone()) {
+                context.queue.askAboutNextNotification();
+            }
+        }
+        else if (utils_js_1.intentIs(handlerInput, constants_1.NO_INTENT)) {
+            context.speak("Okay.");
+            context.speakReprompt(utils_js_1.whatNext(), "What next?");
+            context.setState(constants_1.STATE_NULL);
+        }
+        else {
+            let speech = `Hmm. I didn't get that. Please say yes or no or make another request. 
+                    | Would you like to hear the next notification?`.stripMargin();
+            context.speakReprompt(speech, "Do you want to hear the next notification?");
+        }
+        return context.getResponse();
+    }
+};
+const HelpIntentHandler = {
+    canHandle(handlerInput) {
+        return utils_js_1.intentIs(handlerInput, 'AMAZON.HelpIntent');
+    },
+    handle(handlerInput) {
+        const speechText = 'There is no help message for now. You\'re on your own!';
+        return handlerInput.responseBuilder
+            .speak(speechText)
+            .reprompt(speechText)
+            .getResponse();
+    }
+};
+const CancelAndStopIntentHandler = {
+    canHandle(handlerInput) {
+        return handlerInput.requestEnvelope.request.type === 'IntentRequest'
+            && (handlerInput.requestEnvelope.request.intent.name === 'AMAZON.CancelIntent'
+                || handlerInput.requestEnvelope.request.intent.name === 'AMAZON.StopIntent');
+    },
+    handle(handlerInput) {
+        const speechText = 'Goodbye!';
+        return handlerInput.responseBuilder
+            .speak(speechText)
+            .withShouldEndSession(true)
+            .getResponse();
+    }
+};
+const SessionEndedRequestHandler = {
+    canHandle(handlerInput) {
+        return handlerInput.requestEnvelope.request.type === 'SessionEndedRequest';
+    },
+    handle(handlerInput) {
+        console.log(`Session ended with reason: ${handlerInput.requestEnvelope.request.reason}`);
+        return handlerInput.responseBuilder.getResponse();
     }
 };
 const ErrorHandler = {
@@ -53,12 +180,11 @@ const ErrorHandler = {
             .reprompt('Please try another question')
             .getResponse();
     },
-}
-
+};
 const configureBuilder = () => {
     const skillBuilder = Alexa.SkillBuilders.custom();
     skillBuilder
-        .addRequestHandlers(LaunchRequestHandler, NotificationExecutionHandler)
+        .addRequestHandlers(SessionEndedRequestHandler, CancelAndStopIntentHandler, HelpIntentHandler, LaunchRequestHandler, PinHandler, RecipeHandler, SpecificRecipeHandler, PlayNotificationsHandler, HearNextNotificationHandler, NotificationExecutionHandler)
         .addErrorHandlers(ErrorHandler);
     return skillBuilder;
 };
@@ -78,9 +204,11 @@ exports.handler = async (event, context, callback) => {
         console.log(`ERROR: ${err}`);
         if (callback) {
             callback(err, null);
+            return null;
         }
         else {
             throw err;
         }
     }
 };
+//# sourceMappingURL=index.js.map

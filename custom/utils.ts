@@ -3,11 +3,6 @@ import moment = require('./moment-timezone')
 import { ATTR_STATE, INTENT_REQUEST } from './constants'
 import { HandlerInput } from 'ask-sdk-core';
 
-// for every line of a multi-line string, remove the characters fom the beginning of the line to the pipe character
-String.prototype.stripMargin = function () {
-  return this.replace(/^.*\|/gm, '')
-}
-
 export const stateIs = (handlerInput: HandlerInput, state: string) : boolean => {
   const sessionAttributes = handlerInput.attributesManager.getSessionAttributes()
   const sessionState = sessionAttributes[ATTR_STATE]

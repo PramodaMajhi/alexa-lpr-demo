@@ -1,15 +1,10 @@
 import { NotificationType, AlexaNotification } from './notification-data'
-import { 
-  STATE_NULL, 
-  STATE_SET_APPT_REMINDER, 
-  YES_INTENT, NO_INTENT, 
-  STATE_ORDER_REFILL, 
-  STATE_HEAR_MORE_ABOUT_MAIL_ORDER, 
-  STATE_CREATE_PICKUP_SCRIP_REMINDER, 
-  STATE_CREATE_TAKE_SCRIPT_REMINDER 
+import {
+  STATE_NULL, STATE_SET_APPT_REMINDER, YES_INTENT, NO_INTENT, STATE_ORDER_REFILL,
+  STATE_HEAR_MORE_ABOUT_MAIL_ORDER, STATE_CREATE_PICKUP_SCRIP_REMINDER, STATE_CREATE_TAKE_SCRIPT_REMINDER
 } from "./constants"
 
-export type When  = {
+export type When = {
   state?: string,
   intent?: string
 }
@@ -31,9 +26,9 @@ export type Rule = {
   then: Then
 }
 
-const appointmentRules = (notification: AlexaNotification) : Rule[] => {
+const appointmentRules = (notification: AlexaNotification): Rule[] => {
   const { type, date, time } = notification.detail
-  const list : Rule[] = [ 
+  const list: Rule[] = [
     {
       when: { state: STATE_NULL },
       then: {
@@ -66,9 +61,9 @@ const appointmentRules = (notification: AlexaNotification) : Rule[] => {
 }
 
 
-const refillRules = (notification: AlexaNotification) : Rule[] => {
+const refillRules = (notification: AlexaNotification): Rule[] => {
   const { med, pharmacy } = notification.detail
-  const list : Rule[] = [
+  const list: Rule[] = [
     {
       when: { state: STATE_NULL },
       then: {
@@ -134,7 +129,7 @@ const refillRules = (notification: AlexaNotification) : Rule[] => {
                 | Would you like me to set a reminder to pick up your prescription?`.stripMargin(),
         reprompt: 'Would you like me to create a reminder to pick up your prescription?',
         card: {
-          title: 'Prescription', 
+          title: 'Prescription',
           text: `Your refill prescription for ${med.name} should be ready on ${med.readyDate} at ${med.readyTime} at:
               |${pharmacy.name}
               |${pharmacy.address.street}
@@ -199,12 +194,12 @@ const refillRules = (notification: AlexaNotification) : Rule[] => {
   return list
 }
 
-const announcementRules = (notification: AlexaNotification) : Rule[] => {
+const announcementRules = (notification: AlexaNotification): Rule[] => {
   const { message } = notification.detail
-  const list : Rule[] = [
+  const list: Rule[] = [
     {
-      when: { 
-        state: STATE_NULL 
+      when: {
+        state: STATE_NULL
       },
       then: {
         speak: message
@@ -214,13 +209,13 @@ const announcementRules = (notification: AlexaNotification) : Rule[] => {
   return list
 }
 
-const lookup : {[key in NotificationType]?: (notification: AlexaNotification)=> Rule[]} = {
-  [NotificationType.Appointment]  : appointmentRules,
+const lookup: { [key in NotificationType]?: (notification: AlexaNotification) => Rule[] } = {
+  [NotificationType.Appointment]: appointmentRules,
   [NotificationType.Refill]: refillRules,
   [NotificationType.Announcement]: announcementRules
 }
 
-export const getRules = (notification: AlexaNotification) : Rule[] => {
+export const getRules = (notification: AlexaNotification): Rule[] => {
   let fn = lookup[notification.type]
   return fn ? fn(notification) : []
 }
