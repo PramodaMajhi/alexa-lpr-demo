@@ -1,34 +1,25 @@
-const ATTR = {
-  Q_HEAD: 'qHead',
-  Q_CURRENT: 'qCurrent',
-  STATE: 'state',
-  WAS_PIN_ENTERED: 'wasPINEntered',
-  RECIPE: "recipe"
-}
-
-const CONST = {
-  NAME: 'Addison',
-  LAUNCH_REQUEST: 'LaunchRequest',
-  INTENT_REQUEST: 'IntentRequest',
-  YES_INTENT: 'AMAZON.YesIntent',
-  NO_INTENT: 'AMAZON.NoIntent',
-  PIN_INTENT: 'PinIntent',
-  RECIPE_INTENT: 'RecipeIntent',
-  NOTIFICATIONS_INTENT: 'NotificationsIntent'
-}
-
-const STATE = {
-  NULL: '',
-  WAITING_FOR_PIN: 'WaitingForPin',
-  SET_APPT_REMINDER: 'SetApptReminder?',
-  ORDER_REFILL: 'OrderRefill?',
-  HEAR_MORE_ABOUT_MAIL_ORDER: 'HearMoreAboutMailOrder?',
-  CREATE_PICKUP_SCRIP_REMINDER: 'CreatePickupScripReminder?',
-  CREATE_TAKE_SCRIPT_REMINDER: 'CreateTakeScripReminder?',
-  HEAR_NEXT_NOTIFICATION: 'HearNextNotification?',
-  HEAR_RECIPE: 'HearRecipe?',
-}
-
-exports.ATTR = ATTR
-exports.STATE = STATE
-exports.CONST = CONST
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.ATTR_CONTEXT = 'context';
+exports.ATTR_Q_FRONT = 'qFront';
+exports.ATTR_Q_CURRENT = 'qCurrent';
+exports.ATTR_STATE = 'state';
+exports.ATTR_WAS_PIN_ENTERED = 'wasPINEntered';
+exports.ATTR_RECIPE = "recipe";
+exports.NAME = 'Addison';
+exports.LAUNCH_REQUEST = 'LaunchRequest';
+exports.INTENT_REQUEST = 'IntentRequest';
+exports.YES_INTENT = 'AMAZON.YesIntent';
+exports.NO_INTENT = 'AMAZON.NoIntent';
+exports.PIN_INTENT = 'PinIntent';
+exports.RECIPE_INTENT = 'RecipeIntent';
+exports.NOTIFICATIONS_INTENT = 'NotificationsIntent';
+exports.STATE_NULL = '';
+exports.STATE_WAITING_FOR_PIN = 'WaitingForPin';
+exports.STATE_SET_APPT_REMINDER = 'SetApptReminder?';
+exports.STATE_ORDER_REFILL = 'OrderRefill?';
+exports.STATE_HEAR_MORE_ABOUT_MAIL_ORDER = 'HearMoreAboutMailOrder?';
+exports.STATE_CREATE_PICKUP_SCRIP_REMINDER = 'CreatePickupScripReminder?';
+exports.STATE_CREATE_TAKE_SCRIPT_REMINDER = 'CreateTakeScripReminder?';
+exports.STATE_HEAR_NEXT_NOTIFICATION = 'HearNextNotification?';
+exports.STATE_HEAR_RECIPE = 'HearRecipe?';

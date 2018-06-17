@@ -1,7 +1,19 @@
-const moment = require('./moment-timezone')
+import moment = require('./moment-timezone')
 
-let item1 = {
-  type: "appointment",
+export enum NotificationType {
+  Appointment = "0",
+  Refill = "1",
+  Announcement = "2"
+}
+
+export interface AlexaNotification {
+  type: NotificationType,
+  personal: boolean,
+  detail: any
+}
+
+const item1 : AlexaNotification = {
+  type: NotificationType.Appointment,
   personal: true,
   detail: {
     type: 'opthamologist',
@@ -11,14 +23,15 @@ let item1 = {
   }
 }
 
-let item2 = {
-  type: "refill",
+const item2 : AlexaNotification = {
+  type: NotificationType.Refill,
   personal: true,
   detail: {
     med: {
       name: "Metformin",
       refillsAvailable: "2",
-      readyDate: "June 13th",
+      // 3 days in the future from the current date in the PxT time zone, in the format like "June 18th"
+      readyDate: moment().tz("America/Los_Angeles").add(3, 'days').format('MMMM Do'),
       readyTime: "3 PM",
       prescriptionNumber: "14724530"
     },
@@ -35,16 +48,8 @@ let item2 = {
   }
 }
 
-// Set the prescription ready date to 3 days in the future 
-// from the current date in the PxT time zone, 
-// in the format like "June 18th"
-item2.detail.med.readyDate = moment()
-                              .tz("America/Los_Angeles")
-                              .add(3, 'days')
-                              .format('MMMM Do')
-
-let item3 = {
-  type: "announcement",
+const item3 : AlexaNotification = {
+  type: NotificationType.Announcement,
   personal: false,
   detail: {
     message: `Okay. Here is a message from Blue Shield of California.
@@ -52,10 +57,4 @@ let item3 = {
   }
 }
 
-const addNotifications = (queue) => {  
-  queue.add(item1)  
-  queue.add(item2)  
-  queue.add(item3)
-}
-
-module.exports.addNotifications = addNotifications
+export const notificationList : AlexaNotification[] = [item1, item2, item3]

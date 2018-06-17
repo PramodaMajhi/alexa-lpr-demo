@@ -1,29 +1,27 @@
-const moment = require('./moment-timezone')
-const { ATTR, CONST } = require('./constants')
+import moment = require('./moment-timezone')
+
+import { ATTR_STATE, INTENT_REQUEST } from './constants'
+import { HandlerInput } from 'ask-sdk-core';
 
 // for every line of a multi-line string, remove the characters fom the beginning of the line to the pipe character
 String.prototype.stripMargin = function () {
   return this.replace(/^.*\|/gm, '')
 }
 
-const stateIs = (handlerInput, state) => {
+export const stateIs = (handlerInput: HandlerInput, state: string) : boolean => {
   const sessionAttributes = handlerInput.attributesManager.getSessionAttributes()
-  const sessionState = sessionAttributes[ATTR.STATE]
+  const sessionState = sessionAttributes[ATTR_STATE]
   const result = (sessionState === state)
   return result
 }
 
-const intentIs = (handlerInput, intent) => {
-  const result = handlerInput.requestEnvelope.request.type === CONST.INTENT_REQUEST
+export const intentIs = (handlerInput: HandlerInput, intent: string) : boolean => {
+  const result = handlerInput.requestEnvelope.request.type === INTENT_REQUEST
                  && handlerInput.requestEnvelope.request.intent.name === intent
   return result
 }
 
-const clearState = (handlerInput) => {
-  handlerInput.attributesManager.setSessionAttributes({state: ''})
-}
-
-const greeting = () =>
+export const greeting = () : string =>
 {
   // Convert to local time in PxT and get the hour of the day as an int.
   // TODO: use the address API to get the address of the user and use the 
@@ -31,7 +29,7 @@ const greeting = () =>
   
   let dt = moment().tz("America/Los_Angeles")
   let hStr = dt.format('H')
-  h = parseInt(hStr, 10)
+  let h = parseInt(hStr, 10)
 
   if (h < 12) {
     return 'Good morning'
@@ -51,14 +49,8 @@ const whatNextResponses = [
   'Please ask me a question. '
 ]
 
-const whatNext = () => {
+export const whatNext = () : string => {
   return whatNextResponses[Math.floor(Math.random() * whatNextResponses.length)];
 }
 
-module.exports.stateIs = stateIs
-module.exports.intentIs = intentIs
-module.exports.clearState = clearState
-module.exports.greeting = greeting
-module.exports.whatNext = whatNext
-
-//const {stateIs, intentIs, clearState, greeting, whatNext} = require('./util.js')
+//import {stateIs, intentIs, greeting, whatNext} = from './util.js'

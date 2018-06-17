@@ -1,4 +1,4 @@
-const {handler} = require('../custom/index')
+const {handler} = require('../index')
 
 let response
 
