@@ -24,8 +24,21 @@ const LaunchRequestHandler = {
         let context = CreateContext(handlerInput);
         context.setAttribute(constants_1.ATTR_WAS_PIN_ENTERED, true);
         context.speak(`${utils_js_1.greeting()} ${constants_1.NAME}.`);
-        context.queue.getNotificationNumberText(context);
-        context.queue.startNotification(context);
+        context.queue.getNotificationNumberText();
+        context.queue.startNotification();
+        return context.getResponse();
+    }
+};
+const NotificationExecutionHandler = {
+    canHandle(handlerInput) {
+        return true;
+    },
+    handle(handlerInput) {
+        let context = CreateContext(handlerInput);
+        context.queue.execute();
+        if (!context.isDone()) {
+            context.queue.askAboutNextNotification();
+        }
         return context.getResponse();
     }
 };
@@ -40,11 +53,12 @@ const ErrorHandler = {
             .reprompt('Please try another question')
             .getResponse();
     },
-};
+}
+
 const configureBuilder = () => {
     const skillBuilder = Alexa.SkillBuilders.custom();
     skillBuilder
-        .addRequestHandlers(LaunchRequestHandler)
+        .addRequestHandlers(LaunchRequestHandler, NotificationExecutionHandler)
         .addErrorHandlers(ErrorHandler);
     return skillBuilder;
 };

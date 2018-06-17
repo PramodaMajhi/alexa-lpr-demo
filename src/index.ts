@@ -26,8 +26,8 @@ const LaunchRequestHandler : Alexa.RequestHandler = {
     context.setAttribute(ATTR_WAS_PIN_ENTERED, true)
 
     context.speak(`${greeting()} ${NAME}.`)
-    context.queue.getNotificationNumberText(context)
-    context.queue.startNotification(context)
+    context.queue.getNotificationNumberText()
+    context.queue.startNotification()
     return context.getResponse()
   }
 }
@@ -65,21 +65,22 @@ const PinHandler = {
     return context.getResponse(handlerInput)
   }
 }
-
-const NotificationExecutionHandler = {
-  canHandle(handlerInput: ) {
-    let currentNotification = queue.active()
-    return (currentNotification !== null)
+*/
+// this handler should be last
+const NotificationExecutionHandler : Alexa.RequestHandler = {
+  canHandle(handlerInput) {
+    return true
   },
-  handle(handlerInput: ) {
-    queue.execute(handlerInput.requestEnvelope.request, context)
-    if (!context.done()) {
-      queue.askAboutNextNotification(context)
+  handle(handlerInput) {
+    let context = CreateContext(handlerInput)
+    context.queue.execute()
+    if (!context.isDone()) {
+      context.queue.askAboutNextNotification()
     }
-    return context.getResponse(handlerInput)
+    return context.getResponse()
   }
 }
-
+/*
 const RecipeHandler = {
   canHandle(handlerInput: ) {
     return intentIs(handlerInput, CONST.RECIPE_INTENT)
@@ -215,8 +216,8 @@ const configureBuilder = () : Alexa.CustomSkillBuilder => {
       //RecipeHandler,
       //SpecificRecipeHandler,
       //PlayNotificationsHandler,
-      //NotificationExecutionHandler,
-      //HearNextNotificationHandler
+      //HearNextNotificationHandler,
+      NotificationExecutionHandler,
     )
     .addErrorHandlers(ErrorHandler)
 

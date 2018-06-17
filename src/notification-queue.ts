@@ -1,5 +1,5 @@
 import { Request, IntentRequest } from 'ask-sdk-model';
-import { AlexaNotification, notificationList } from './notification-data'
+import { AlexaNotification, notificationList, NotificationType } from './notification-data'
 import { Rule, getRules, When, Then } from './notification-language'
 import { Context } from './context'
 import {
@@ -7,8 +7,10 @@ import {
   ATTR_Q_CURRENT,
   STATE_NULL,
   ATTR_WAS_PIN_ENTERED,
-  STATE_WAITING_FOR_PIN
+  STATE_WAITING_FOR_PIN,
+  STATE_HEAR_NEXT_NOTIFICATION
 } from './constants'
+import { whatNext } from './utils';
 
 
 export class NotificationQueue {
@@ -21,16 +23,16 @@ export class NotificationQueue {
     this._context = context
     this._queue = []
     this.add(...notificationList)
-    this.loadState(this._context)
+    this.loadState()
   }
 
   add(...items: AlexaNotification[]) {
     this._queue.push(...items)
   }
 
-  loadState(context: Context) {
-    this._front = context.getNumericAttribute(ATTR_Q_FRONT, 0)
-    this._current = context.getNumericAttribute(ATTR_Q_FRONT, -1)
+  loadState() {
+    this._front = this._context.getNumericAttribute(ATTR_Q_FRONT, 0)
+    this._current = this._context.getNumericAttribute(ATTR_Q_FRONT, -1)
   }
 
   saveState(attributes: { [s: string]: string }) {
@@ -63,51 +65,51 @@ export class NotificationQueue {
     return this._queue[this._front]
   }
 
-  getNotificationNumberText(context: Context) {
+  getNotificationNumberText() {
     if (this.length > 1) {
-      context.speak(`You have ${this.length} notifications.`)
+      this._context.speak(`You have ${this.length} notifications.`)
       return
     }
 
     if (this.length <= 0) {
-      context.speak('You do not have any notifications.')
+      this._context.speak('You do not have any notifications.')
       return
     }
 
-    context.speak('You have 1 notification.')
+    this._context.speak('You have 1 notification.')
   }
 
-  startNotification(context: Context) {
-    this.checkForPinRequired(context)
-    if (context.isDone()) {
+  startNotification() {
+    this.checkForPinRequired()
+    if (this._context.isDone()) {
       return
     }
     this.dequeue()
-    context.setState(STATE_NULL)
-    this.execute(context)
+    this._context.setState(STATE_NULL)
+    this.execute()
   }
 
-  checkForPinRequired(context: Context) {
+  checkForPinRequired() {
     // if the PIN has not been given and the first item is personal, we need to ask for the PIN
     if (this.length) {
       let notification = this.peek()
-      if (notification.personal && !context.getBooleanAttribute(ATTR_WAS_PIN_ENTERED, false)) {
+      if (notification.personal && ! this._context.getBooleanAttribute(ATTR_WAS_PIN_ENTERED, false)) {
         let pronoun = this.length > 1 ? 'them' : 'it'
-        context.speakReprompt(`Please tell me your Blue Shield 4-digit pin if you would like to hear ${pronoun} now.`,
+        this._context.speakReprompt(`Please tell me your Blue Shield 4-digit pin if you would like to hear ${pronoun} now.`,
           'Please say your PIN.')
-        context.setState(STATE_WAITING_FOR_PIN)
+        this._context.setState(STATE_WAITING_FOR_PIN)
       }
     }
   }
 
-  isMatch(context: Context, rule: Rule) {
+  isMatch(rule: Rule) {
     let test = (key: keyof When) : boolean => {
       const value = rule.when[key]
       switch(key) {
         case 'state': 
-          return context.getState() === value
+          return this._context.getState() === value
         case 'intent':
-          return (<IntentRequest>context.handlerInput.requestEnvelope.request).intent.name === value
+          return (<IntentRequest>this._context.handlerInput.requestEnvelope.request).intent.name === value
         default:
           throw new Error(`invalid key in isMatch: ${key}`)
       }
@@ -126,19 +128,19 @@ export class NotificationQueue {
     return result
   }
 
-  action(context: Context, key: string, value: any, jump: (target: string) => void) {
+  action(key: string, value: any, jump: (target: string) => void) {
     switch(key) {
       case 'speak': 
-        context.speak(value)
+        this._context.speak(value)
         break
       case 'reprompt':
-        context.reprompt(value)
+        this._context.reprompt(value)
         break
       case 'card':
-        context.card(value)
+        this._context.card(value)
         break
       case 'setState':
-        context.setState(value)
+        this._context.setState(value)
         break
       case 'jump':
         jump(value)
@@ -148,11 +150,11 @@ export class NotificationQueue {
     }
   }
 
-  execute(context: Context) {
+  execute() {
     let notification = this._queue[this._current]
     let list = getRules(notification)
     // find the first element in the list where all of the match predicates are true
-    let rule = list.find(rule => this.isMatch(context, rule))
+    let rule = list.find(rule => this.isMatch(rule))
     if (!rule) {
       throw new Error("No rule match found")
     }
@@ -169,7 +171,7 @@ export class NotificationQueue {
 
     // now execute all of the actions in the then object
     for (const [key, value] of Object.entries(rule.then)) {
-      this.action(context, key, value, jump)
+      this.action(key, value, jump)
     }
 
     if (_jump) {
@@ -179,14 +181,39 @@ export class NotificationQueue {
         throw new Error(`target of jump not found for ruleId: ${_jump}`)
       }
       for (const [key, value] of Object.entries(rule.then)) {
-        this.action(context, key, value, jump)
-      }
-      
+        this.action(key, value, jump)
+      }      
     }
 
     // if there is no reprompt, the execution of the notification is over
-    if (!context.isDone()) {
+    if (!this._context.isDone()) {
       this._current = -1
     }
   }
+
+  askAboutNextNotification() {
+    if (! this._context.isDone()) {
+      if (this.length) {
+        let speech = `Your next notification is ${this.getTypeText()}. Would you like to hear it now?`
+        this._context.speakReprompt(speech, "Do you want to hear the next notification?")
+        this._context.setState(STATE_HEAR_NEXT_NOTIFICATION)
+      } else {
+        this._context.speak('<break time="100ms"/>There are no more notifications.')
+        this._context.speakReprompt(whatNext(), "What next?")
+      }
+    }
+  }
+
+  getTypeText() {
+    let notification = this.peek()
+    switch (notification.type) {
+      case NotificationType.Appointment:
+        return 'about an appointment'
+      case NotificationType.Refill:
+        return 'about a medication refill'
+      case NotificationType.Announcement:
+        return 'an announcement'
+    }
+  }
 }
+
