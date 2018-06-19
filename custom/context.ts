@@ -1,6 +1,9 @@
 // When using the Alexa SDK builder, the call to speak() must include all of the speech.
 // However, we want to build up the speech across many different functions, so it's best to maintain
-// our own string. The Context is just a wrapper for these common strings, and the attributes.
+// our own string. 
+
+// The Context is a wrapper for the handlerInput container, the speech fragments, and the 
+// notification queue which tracks notifications.
 
 import * as Alexa from 'ask-sdk-core'
 import { NotificationQueue } from './notification-queue';

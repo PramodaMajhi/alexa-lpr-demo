@@ -14,8 +14,9 @@ import {
 } from './constants'
 
 const CreateContext = (handlerInput: Alexa.HandlerInput) => {
-  // Context holds a queue, but we can't initialize the queue from the Context
-  // in the constructor of the Conext, as Construction is not complete
+  // Context holds a queue and the queue points back to the context and makes
+  // calls into it. Not good form to call into an object while it's being constructed, 
+  // so we make a separate call to createQueue().
   let context = new Context(handlerInput)
   context.createQueue()
   return context
@@ -67,6 +68,7 @@ const PinHandler: Alexa.RequestHandler = {
       context.speakReprompt("I'm sorry. That pin is not correct. Please say the PIN again.", "Please say the PIN again")
       return context.getResponse()
     }
+    context.speak(`Okay, great. That's right.`)
     context.setAttribute(ATTR_WAS_PIN_ENTERED, true)
     context.queue.startNotification()
     if (!context.isDone()) {
