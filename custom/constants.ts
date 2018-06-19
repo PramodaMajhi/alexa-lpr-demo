@@ -5,7 +5,7 @@
   export const ATTR_WAS_PIN_ENTERED = 'wasPINEntered'
   export const ATTR_RECIPE = "recipe"
 
-  export const NAME = 'Addison'
+  export const FIRST_NAME = 'Addison'
   export const LAUNCH_REQUEST = 'LaunchRequest'
   export const INTENT_REQUEST = 'IntentRequest'
   export const YES_INTENT = 'AMAZON.YesIntent'

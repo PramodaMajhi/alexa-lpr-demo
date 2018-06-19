@@ -7,8 +7,9 @@ import * as Alexa from 'ask-sdk-core'
 import { RequestEnvelope, IntentRequest, SessionEndedRequest } from 'ask-sdk-model'
 import { Context } from './context'
 import { greeting, stateIs, intentIs, whatNext } from './utils.js'
+import { getFirstName } from './getMemberInfo'
 import {
-  ATTR_WAS_PIN_ENTERED, NAME, LAUNCH_REQUEST, ATTR_Q_CURRENT, STATE_HEAR_NEXT_NOTIFICATION,
+  ATTR_WAS_PIN_ENTERED, LAUNCH_REQUEST, ATTR_Q_CURRENT, STATE_HEAR_NEXT_NOTIFICATION,
   YES_INTENT, NO_INTENT, STATE_NULL, RECIPE_INTENT, STATE_HEAR_RECIPE, ATTR_RECIPE,
   NOTIFICATIONS_INTENT, STATE_WAITING_FOR_PIN, PIN_INTENT
 } from './constants'
@@ -26,17 +27,20 @@ const LaunchRequestHandler: Alexa.RequestHandler = {
     return handlerInput.requestEnvelope.request.type === LAUNCH_REQUEST
   },
   handle(handlerInput) {
-    let context = CreateContext(handlerInput)
+    let context = CreateContext(handlerInput)    
 
     // Alexa is having a serious problem recognizing PINS right now. I even tried it on older projects
     // that have been used for months, and the PIN intent (AMAZON.FOUR_DIGIT_NUMBER) is not recognized.
     // This is temporary
     context.setAttribute(ATTR_WAS_PIN_ENTERED, true)
 
-    context.speak(`${greeting()} ${NAME}.`)
-    context.queue.getNotificationNumberText()
-    context.queue.startNotification()
-    return context.getResponse()
+    return getFirstName()
+      .then(firstName => {
+        context.speak(`${greeting()} ${firstName}.`)
+        context.queue.getNotificationNumberText()
+        context.queue.startNotification()
+        return context.getResponse()
+    })
   }
 }
 
@@ -99,7 +103,7 @@ const RecipeHandler: Alexa.RequestHandler = {
     let context = CreateContext(handlerInput)
     // diabetes intentionally misspelled to help pronunciation without going phonetic
     let speech = `Okay. You patient health record recommends eating a low-sugar diet.
-                  | I have a few recipes recommended by the American Diabetez Association.
+                  | I have a few recipes recommended by the american diabetes association.
                   | Would you like the recipe for Sweet and Savory Spiralized Zucchini Noodles?`.stripMargin()
 
     context.speakReprompt(speech, 'Want the recipe for Sweet and Savory Spiralized Zucchini Noodles?')

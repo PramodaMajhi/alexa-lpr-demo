@@ -6,6 +6,7 @@ String.prototype.stripMargin = function () {
 const Alexa = require("ask-sdk-core");
 const context_1 = require("./context");
 const utils_js_1 = require("./utils.js");
+const getMemberInfo_1 = require("./getMemberInfo");
 const constants_1 = require("./constants");
 const CreateContext = (handlerInput) => {
     let context = new context_1.Context(handlerInput);
@@ -19,10 +20,13 @@ const LaunchRequestHandler = {
     handle(handlerInput) {
         let context = CreateContext(handlerInput);
         context.setAttribute(constants_1.ATTR_WAS_PIN_ENTERED, true);
-        context.speak(`${utils_js_1.greeting()} ${constants_1.NAME}.`);
-        context.queue.getNotificationNumberText();
-        context.queue.startNotification();
-        return context.getResponse();
+        return getMemberInfo_1.getFirstName()
+            .then(firstName => {
+            context.speak(`${utils_js_1.greeting()} ${firstName}.`);
+            context.queue.getNotificationNumberText();
+            context.queue.startNotification();
+            return context.getResponse();
+        });
     }
 };
 const PlayNotificationsHandler = {
@@ -79,7 +83,7 @@ const RecipeHandler = {
     handle(handlerInput) {
         let context = CreateContext(handlerInput);
         let speech = `Okay. You patient health record recommends eating a low-sugar diet.
-                  | I have a few recipes recommended by the American Diabetez Association.
+                  | I have a few recipes recommended by the american diabetes association.
                   | Would you like the recipe for Sweet and Savory Spiralized Zucchini Noodles?`.stripMargin();
         context.speakReprompt(speech, 'Want the recipe for Sweet and Savory Spiralized Zucchini Noodles?');
         context.setState(constants_1.STATE_HEAR_RECIPE);
