@@ -96,7 +96,7 @@ export class Context {
     return def
   }
 
-  getBooleanAttribute(key: string, def: boolean): boolean {
+  getBooleanAttribute(key: string, def: boolean = false): boolean {
     if (key in this._attributes) {
       return this._attributes[key] === 'true'
     }

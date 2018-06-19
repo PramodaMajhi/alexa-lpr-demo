@@ -7,11 +7,10 @@ import * as Alexa from 'ask-sdk-core'
 import { RequestEnvelope, IntentRequest, SessionEndedRequest } from 'ask-sdk-model'
 import { Context } from './context'
 import { greeting, stateIs, intentIs, whatNext } from './utils.js'
-import { getFirstName } from './getMemberInfo'
 import {
   ATTR_WAS_PIN_ENTERED, LAUNCH_REQUEST, ATTR_Q_CURRENT, STATE_HEAR_NEXT_NOTIFICATION,
   YES_INTENT, NO_INTENT, STATE_NULL, RECIPE_INTENT, STATE_HEAR_RECIPE, ATTR_RECIPE,
-  NOTIFICATIONS_INTENT, STATE_WAITING_FOR_PIN, PIN_INTENT
+  NOTIFICATIONS_INTENT, PIN_INTENT, STATE_CALL_RESTAURANT
 } from './constants'
 
 const CreateContext = (handlerInput: Alexa.HandlerInput) => {
@@ -31,16 +30,13 @@ const LaunchRequestHandler: Alexa.RequestHandler = {
 
     // Alexa is having a serious problem recognizing PINS right now. I even tried it on older projects
     // that have been used for months, and the PIN intent (AMAZON.FOUR_DIGIT_NUMBER) is not recognized.
-    // This is temporary
-    context.setAttribute(ATTR_WAS_PIN_ENTERED, true)
+    // I hope this is temporary
+    // context.setAttribute(ATTR_WAS_PIN_ENTERED, true)
 
-    return getFirstName()
-      .then(firstName => {
-        context.speak(`${greeting()} ${firstName}.`)
-        context.queue.getNotificationNumberText()
-        context.queue.startNotification()
-        return context.getResponse()
-    })
+    context.speak(greeting())
+    context.queue.getNotificationNumberText()
+    context.queue.startNotification()
+    return context.getResponse()
   }
 }
 
@@ -61,7 +57,7 @@ const PlayNotificationsHandler: Alexa.RequestHandler = {
 
 const PinHandler: Alexa.RequestHandler = {
   canHandle(handlerInput) {
-    return stateIs(handlerInput, STATE_WAITING_FOR_PIN) && intentIs(handlerInput, PIN_INTENT)
+    return intentIs(handlerInput, PIN_INTENT)
   },
   handle(handlerInput) {
     let context = CreateContext(handlerInput)
@@ -105,12 +101,9 @@ const RecipeHandler: Alexa.RequestHandler = {
     let speech = `Okay. You patient health record recommends eating a low-sugar diet.
                   | I have a few recipes recommended by the american diabetes association.
                   | Would you like the recipe for Sweet and Savory Spiralized Zucchini Noodles?`.stripMargin()
-
     context.speakReprompt(speech, 'Want the recipe for Sweet and Savory Spiralized Zucchini Noodles?')
-
     context.setState(STATE_HEAR_RECIPE)
     context.setAttribute(ATTR_RECIPE, 'Sweet and Savory Spiralized Zucchini Noodles')
-
     return context.getResponse()
   }
 }
@@ -122,7 +115,8 @@ const SpecificRecipeHandler: Alexa.RequestHandler = {
   handle(handlerInput) {
     let context = CreateContext(handlerInput)
     if (intentIs(handlerInput, YES_INTENT)) {
-      context.speak("Okay. I've sent a card with the recipe on it and I've added the ingredients to your Alexa shopping list.")
+      context.speak(`Okay. I've sent a card with the recipe and I've added the 
+                    | ingredients to your Alexa shopping list.`.stripMargin())
 
       let cardText = `1 Zucchini
                       |1 Savory sauce
@@ -135,8 +129,26 @@ const SpecificRecipeHandler: Alexa.RequestHandler = {
       context.speak("As you wish!")
     }
 
-    context.queue.askAboutNextNotification()
+    context.speak(`I also saw that you have an open table reservation at Barcha this Friday. 
+                   | Would you like me to call the restaurant about your dietary recommendations?`.stripMargin())
+    context.reprompt("shall I call the restaurant?")
+    context.setState(STATE_CALL_RESTAURANT)
+    return context.getResponse()
+  }
+}
 
+const CallRestaurantHandler: Alexa.RequestHandler = {
+  canHandle(handlerInput) {
+    return stateIs(handlerInput, STATE_CALL_RESTAURANT)
+  },
+  handle(handlerInput) {
+    let context = CreateContext(handlerInput)
+    if (intentIs(handlerInput, YES_INTENT)) {
+      context.speak("Okay. I'll call them for you.")      
+    } else {
+      context.speak(`Okay. Don't forget to use the Blue Shield Healthy Eating app when eating out.`)
+    }
+    context.setState(STATE_NULL)
     return context.getResponse()
   }
 }
@@ -232,6 +244,7 @@ const configureBuilder = (): Alexa.CustomSkillBuilder => {
       PinHandler,
       RecipeHandler,
       SpecificRecipeHandler,
+      CallRestaurantHandler,
       PlayNotificationsHandler,
       HearNextNotificationHandler,
       NotificationExecutionHandler,

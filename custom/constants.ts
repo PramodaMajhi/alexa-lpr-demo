@@ -15,7 +15,6 @@
   export const NOTIFICATIONS_INTENT = 'NotificationsIntent'
 
   export const STATE_NULL = ''
-  export const STATE_WAITING_FOR_PIN = 'WaitingForPin'
   export const STATE_SET_APPT_REMINDER = 'SetApptReminder?'
   export const STATE_ORDER_REFILL = 'OrderRefill?'
   export const STATE_HEAR_MORE_ABOUT_MAIL_ORDER = 'HearMoreAboutMailOrder?'
@@ -23,3 +22,4 @@
   export const STATE_CREATE_TAKE_SCRIPT_REMINDER = 'CreateTakeScripReminder?'
   export const STATE_HEAR_NEXT_NOTIFICATION = 'HearNextNotification?'
   export const STATE_HEAR_RECIPE = 'HearRecipe?'
+  export const STATE_CALL_RESTAURANT = 'CallRestaurant?'

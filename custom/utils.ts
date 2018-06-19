@@ -27,15 +27,15 @@ export const greeting = () : string =>
   let h = parseInt(hStr, 10)
 
   if (h < 12) {
-    return 'Good morning'
+    return 'Good morning.'
   }
   if (h < 17) {
-    return 'Good afternoon'
+    return 'Good afternoon.'
   }
   if (h < 20) {
-    return 'Good evening'
+    return 'Good evening.'
   }
-  return 'Hello'
+  return 'Hello.'
 }
 
 const whatNextResponses = [

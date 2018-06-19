@@ -124,8 +124,8 @@ const refillRules = (notification: AlexaNotification): Rule[] => {
         // when the when is empty, the rule can never be matched, only jumped to
       },
       then: {
-        speak: `I've completed your refill request and it should be ready for pickup on ${med.readyDate} at ${med.readyTime}.
-                | I've also sent a card with the pharmacy address and prescription information.
+        speak: `I've completed your refill request and it will be ready for pickup on ${med.readyDate} at ${med.readyTime}.
+                | I've also sent a card to your Alexa app with the address, the prescription and the prescription number.
                 | Would you like me to set a reminder to pick up your prescription?`.stripMargin(),
         reprompt: 'Would you like me to create a reminder to pick up your prescription?',
         card: {
@@ -166,7 +166,7 @@ const refillRules = (notification: AlexaNotification): Rule[] => {
       ruleId: 'd0386017',
       when: {},
       then: {
-        speak: `I also see you should take this medicine 2 times per day. 
+        speak: `I also see that you are supposed to take this medicine 2 times per day. 
                | Would you like me to remind you each morning and evening?`.stripMargin(),
         reprompt: 'Shall I set a reminder to take your medicine?',
         setState: STATE_CREATE_TAKE_SCRIPT_REMINDER

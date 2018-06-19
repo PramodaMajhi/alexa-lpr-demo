@@ -4,8 +4,11 @@ import { Rule, getRules, When } from './notification-language'
 import { Context } from './context'
 import { whatNext } from './utils'
 import {
-  ATTR_Q_FRONT, ATTR_Q_CURRENT, STATE_NULL, ATTR_WAS_PIN_ENTERED, 
-  STATE_WAITING_FOR_PIN, STATE_HEAR_NEXT_NOTIFICATION
+  ATTR_Q_FRONT, 
+  ATTR_Q_CURRENT, 
+  STATE_NULL, 
+  ATTR_WAS_PIN_ENTERED, 
+  STATE_HEAR_NEXT_NOTIFICATION
 } from './constants'
 
 
@@ -89,11 +92,10 @@ export class NotificationQueue {
     // if the PIN has not been given and the first item is personal, we need to ask for the PIN
     if (this.length) {
       let notification = this.peek()
-      if (notification.personal && ! this._context.getBooleanAttribute(ATTR_WAS_PIN_ENTERED, false)) {
+      if (notification.personal && ! this._context.getBooleanAttribute(ATTR_WAS_PIN_ENTERED)) {
         let pronoun = this.length > 1 ? 'them' : 'it'
         this._context.speakReprompt(`Please tell me your Blue Shield 4-digit pin if you would like to hear ${pronoun} now.`,
           'Please say your PIN.')
-        this._context.setState(STATE_WAITING_FOR_PIN)
       }
     }
   }
@@ -194,7 +196,7 @@ export class NotificationQueue {
         this._context.speakReprompt(speech, "Do you want to hear the next notification?")
         this._context.setState(STATE_HEAR_NEXT_NOTIFICATION)
       } else {
-        this._context.speak('<break time="100ms"/>There are no more notifications.')
+        this._context.speak('You have no more notifications.')
         this._context.speakReprompt(whatNext(), "What next?")
       }
     }

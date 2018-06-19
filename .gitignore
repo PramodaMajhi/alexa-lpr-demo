@@ -1,2 +1,4 @@
-node_modules/
-lambda/
+node_modules
+lambda
+lambda/custom
+
