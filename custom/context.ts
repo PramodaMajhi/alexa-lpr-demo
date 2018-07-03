@@ -133,7 +133,12 @@ export class Context {
       builder.reprompt(this._reprompt)
     }
     if (this._card) {
-      builder.withSimpleCard(this._card.title, this._card.text)
+      builder.withStandardCard(
+        this._card.title, 
+        this._card.text,
+        "https://s3.amazonaws.com/alexa-blue-image-files/bsc-logo-small.png",
+        "https://s3.amazonaws.com/alexa-blue-image-files/bsc-logo-large.png"
+      )
     }
     if (this._shouldEndSession) {
       builder.withShouldEndSession(true)

@@ -1,6 +1,6 @@
 import { NotificationType, AlexaNotification } from './notification-data'
 import {
-  STATE_NULL, STATE_SET_APPT_REMINDER, YES_INTENT, NO_INTENT, STATE_ORDER_REFILL,
+  STATE_NULL, STATE_SET_APPT_REMINDER, YES_INTENT, STATE_ORDER_REFILL,
   STATE_HEAR_MORE_ABOUT_MAIL_ORDER, STATE_CREATE_PICKUP_SCRIP_REMINDER, STATE_CREATE_TAKE_SCRIPT_REMINDER
 } from "./constants"
 
@@ -49,7 +49,7 @@ const appointmentRules = (notification: AlexaNotification): Rule[] => {
     {
       when: {
         state: STATE_SET_APPT_REMINDER,
-        intent: NO_INTENT
+        intent: '*'
       },
       then: {
         speak: 'Okay.'
@@ -92,7 +92,7 @@ const refillRules = (notification: AlexaNotification): Rule[] => {
     {
       when: {
         state: STATE_ORDER_REFILL,
-        intent: NO_INTENT
+        intent: '*'
       },
       then: {
         speak: 'As you wish.'
@@ -111,7 +111,7 @@ const refillRules = (notification: AlexaNotification): Rule[] => {
     {
       when: {
         state: STATE_HEAR_MORE_ABOUT_MAIL_ORDER,
-        intent: NO_INTENT
+        intent: '*'
       },
       then: {
         speak: 'Okay.',
@@ -155,7 +155,7 @@ const refillRules = (notification: AlexaNotification): Rule[] => {
     {
       when: {
         state: STATE_CREATE_PICKUP_SCRIP_REMINDER,
-        intent: NO_INTENT
+        intent: '*'
       },
       then: {
         speak: 'Okay.',
@@ -184,7 +184,7 @@ const refillRules = (notification: AlexaNotification): Rule[] => {
     {
       when: {
         state: STATE_CREATE_TAKE_SCRIPT_REMINDER,
-        intent: NO_INTENT
+        intent: '*'
       },
       then: {
         speak: 'As you wish!'

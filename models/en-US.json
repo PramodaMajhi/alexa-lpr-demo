@@ -1,69 +1,102 @@
 {
   "interactionModel": {
-      "languageModel": {
-          "invocationName": "blue demo",
-          "intents": [
-              {
-                  "name": "AMAZON.CancelIntent",
-                  "samples": []
-              },
-              {
-                  "name": "AMAZON.HelpIntent",
-                  "samples": []
-              },
-              {
-                  "name": "AMAZON.StopIntent",
-                  "samples": []
-              },
-              {
-                  "name": "AMAZON.YesIntent",
-                  "samples": [
-                      "yes that sounds marvelous",
-                      "yes that sounds fantastic",
-                      "yes that sounds perfect",
-                      "yes that sounds delicious"
-                  ]
-              },
-              {
-                  "name": "AMAZON.NoIntent",
-                  "samples": []
-              },
-              {
-                  "name": "PinIntent",
-                  "slots": [
-                      {
-                          "name": "pin",
-                          "type": "AMAZON.FOUR_DIGIT_NUMBER"
-                      }
-                  ],
-                  "samples": [
-                      "{pin}",
-                      "my pin is {pin}"
-                  ]
-              },
-              {
-                  "name": "RecipeIntent",
-                  "slots": [],
-                  "samples": [
-                      "do you know any recipes",
-                      "I'd like a recipe recommendation for tonight",
-                      "I'd like a recipe recommendation",
-                      "Can you recommend something for dinner tonight"
-                  ]
-              },
-              {
-                  "name": "NotificationsIntent",
-                  "slots": [],
-                  "samples": [
-                      "play notifications",
-                      "play my notifications",
-                      "do I have any notifications",
-                      "play messages",
-                      "do I have any messages"
-                  ]
-              }
+    "languageModel": {
+      "invocationName": "blue demo",
+      "intents": [
+        {
+          "name": "AMAZON.CancelIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.HelpIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.StopIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.YesIntent",
+          "samples": [
+            "yes that'd be helpful",
+            "yes that be helpful",
+            "yes that would be helpful",
+            "yes please that sounds delicious",
+            "yes that sounds marvelous",
+            "yes that sounds fantastic",
+            "yes that would be fantastic",
+            "yes that would be awesome",
+            "yes that sounds perfect",
+            "yes that sounds delicious",
+            "yes that would be great",
+            "yes that sounds great",
+            "yes that would be super",
+            "yes that sounds super",
+            "yes that be great",
+            "yes great"
+          ]
+        },
+        {
+          "name": "AMAZON.NoIntent",
+          "samples": [
+            "nope",
+            "nah",
+            "no",
+            "no thank you",
+            "no thanks",
+            "no not right now",
+            "not now",
+            "no not now",
+            "not at this time",
+            "no not at this time",
+            "not right now"
+          ]
+        },
+        {
+          "name": "PinIntent",
+          "slots": [
+            {
+              "name": "pin",
+              "type": "AMAZON.FOUR_DIGIT_NUMBER"
+            }
           ],
-          "types": []
-      }
+          "samples": [
+            "{pin}",
+            "my pin is {pin}"
+          ]
+        },
+        {
+          "name": "RecipeIntent",
+          "slots": [],
+          "samples": [
+            "What food can I eat",
+            "What can I eat",
+            "What should I eat",
+            "What food do you recommend",
+            "Can you recommend something to eat for dinner tonight",
+            "do you know any recipes",
+            "I'd like a recipe recommendation for tonight",
+            "I'd like a recipe recommendation",
+            "Can you recommend something for dinner tonight"
+          ]
+        },
+        {
+          "name": "NotificationsIntent",
+          "slots": [],
+          "samples": [
+            "play notifications",
+            "play my notifications",
+            "do I have any notifications",
+            "play messages",
+            "do I have any messages"
+          ]
+        },
+        {
+          "name": "AMAZON.FallbackIntent",
+          "samples": []
+        }
+      ],
+      "types": []
+    }
   }
 }

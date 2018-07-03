@@ -10,7 +10,7 @@ import { greeting, stateIs, intentIs, whatNext } from './utils.js'
 import {
   ATTR_WAS_PIN_ENTERED, LAUNCH_REQUEST, ATTR_Q_CURRENT, STATE_HEAR_NEXT_NOTIFICATION,
   YES_INTENT, NO_INTENT, STATE_NULL, RECIPE_INTENT, STATE_HEAR_RECIPE, ATTR_RECIPE,
-  NOTIFICATIONS_INTENT, PIN_INTENT, STATE_CALL_RESTAURANT
+  NOTIFICATIONS_INTENT, PIN_INTENT, STATE_CALL_RESTAURANT, FALLBACK_INTENT
 } from './constants'
 
 const CreateContext = (handlerInput: Alexa.HandlerInput) => {
@@ -93,6 +93,19 @@ const NotificationExecutionHandler: Alexa.RequestHandler = {
   }
 }
 
+const FallbackHandler: Alexa.RequestHandler = {
+  canHandle(handlerInput) {
+    return intentIs(handlerInput, FALLBACK_INTENT)
+  },
+  handle(handlerInput) {
+    let context = CreateContext(handlerInput)
+    // diabetes intentionally misspelled to help pronunciation without going phonetic
+    context.speakReprompt("I didn't get that. Can you please say it again?",
+                          "Can you please say that again?")
+    return context.getResponse()
+  }
+}
+
 const RecipeHandler: Alexa.RequestHandler = {
   canHandle(handlerInput) {
     return intentIs(handlerInput, RECIPE_INTENT)
@@ -146,11 +159,12 @@ const CallRestaurantHandler: Alexa.RequestHandler = {
   handle(handlerInput) {
     let context = CreateContext(handlerInput)
     if (intentIs(handlerInput, YES_INTENT)) {
-      context.speak("Okay. I'll call them for you.")      
+      context.speak("Okay. I'll call them for you.")
     } else {
       context.speak(`Okay. Don't forget to use the Blue Shield Healthy Eating app when eating out.`)
     }
     context.setState(STATE_NULL)
+    context.speakReprompt("What can I help you with next?", "What next?")
     return context.getResponse()
   }
 }
@@ -241,16 +255,17 @@ const configureBuilder = (): Alexa.CustomSkillBuilder => {
     .addRequestHandlers(
       SessionEndedRequestHandler,
       CancelAndStopIntentHandler,
+      FallbackHandler,
       HelpIntentHandler,
       LaunchRequestHandler,
       PinHandler,
+      NotificationExecutionHandler,
       RecipeHandler,
       SpecificRecipeHandler,
       CallRestaurantHandler,
       PlayNotificationsHandler,
-      HearNextNotificationHandler,
-      NotificationExecutionHandler,
-  )
+      HearNextNotificationHandler
+    )
     .addErrorHandlers(ErrorHandler)
 
   return skillBuilder
@@ -267,7 +282,7 @@ exports.handler = async (event: RequestEnvelope, context: any, callback: (err: E
 
   try {
     let response = await skill.invoke(event, context)
-    // console.log(`RESPONSE: ${JSON.stringify(response, null, 2)}`)
+    //console.log(`RESPONSE: ${JSON.stringify(response, null, 2)}`)
     if (callback) {
       callback(null, response)
     }

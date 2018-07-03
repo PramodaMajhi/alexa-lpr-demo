@@ -13,6 +13,7 @@
   export const PIN_INTENT = 'PinIntent'
   export const RECIPE_INTENT = 'RecipeIntent'
   export const NOTIFICATIONS_INTENT = 'NotificationsIntent'
+  export const FALLBACK_INTENT = "AMAZON.FallbackIntent"
 
   export const STATE_NULL = ''
   export const STATE_SET_APPT_REMINDER = 'SetApptReminder?'

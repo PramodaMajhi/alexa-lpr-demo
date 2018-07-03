@@ -6,7 +6,6 @@ String.prototype.stripMargin = function () {
 const Alexa = require("ask-sdk-core");
 const context_1 = require("./context");
 const utils_js_1 = require("./utils.js");
-const getMemberInfo_1 = require("./getMemberInfo");
 const constants_1 = require("./constants");
 const CreateContext = (handlerInput) => {
     let context = new context_1.Context(handlerInput);
@@ -19,14 +18,10 @@ const LaunchRequestHandler = {
     },
     handle(handlerInput) {
         let context = CreateContext(handlerInput);
-        context.setAttribute(constants_1.ATTR_WAS_PIN_ENTERED, true);
-        return getMemberInfo_1.getFirstName()
-            .then(firstName => {
-            context.speak(`${utils_js_1.greeting()} ${firstName}.`);
-            context.queue.getNotificationNumberText();
-            context.queue.startNotification();
-            return context.getResponse();
-        });
+        context.speak(utils_js_1.greeting());
+        context.queue.getNotificationNumberText();
+        context.queue.startNotification();
+        return context.getResponse();
     }
 };
 const PlayNotificationsHandler = {
@@ -45,7 +40,7 @@ const PlayNotificationsHandler = {
 };
 const PinHandler = {
     canHandle(handlerInput) {
-        return utils_js_1.stateIs(handlerInput, constants_1.STATE_WAITING_FOR_PIN) && utils_js_1.intentIs(handlerInput, constants_1.PIN_INTENT);
+        return utils_js_1.intentIs(handlerInput, constants_1.PIN_INTENT);
     },
     handle(handlerInput) {
         let context = CreateContext(handlerInput);
@@ -54,6 +49,7 @@ const PinHandler = {
             context.speakReprompt("I'm sorry. That pin is not correct. Please say the PIN again.", "Please say the PIN again");
             return context.getResponse();
         }
+        context.speak(`Okay, great. That's right.`);
         context.setAttribute(constants_1.ATTR_WAS_PIN_ENTERED, true);
         context.queue.startNotification();
         if (!context.isDone()) {
@@ -73,6 +69,16 @@ const NotificationExecutionHandler = {
         if (!context.isDone()) {
             context.queue.askAboutNextNotification();
         }
+        return context.getResponse();
+    }
+};
+const FallbackHandler = {
+    canHandle(handlerInput) {
+        return utils_js_1.intentIs(handlerInput, constants_1.FALLBACK_INTENT);
+    },
+    handle(handlerInput) {
+        let context = CreateContext(handlerInput);
+        context.speakReprompt("I didn't get that. Can you please say it again?", "Can you please say that again?");
         return context.getResponse();
     }
 };
@@ -98,7 +104,8 @@ const SpecificRecipeHandler = {
     handle(handlerInput) {
         let context = CreateContext(handlerInput);
         if (utils_js_1.intentIs(handlerInput, constants_1.YES_INTENT)) {
-            context.speak("Okay. I've sent a card with the recipe on it and I've added the ingredients to your Alexa shopping list.");
+            context.speak(`Okay. I've sent a card with the recipe and I've added the 
+                    | ingredients to your Alexa shopping list.`.stripMargin());
             let cardText = `1 Zucchini
                       |1 Savory sauce
                       |
@@ -109,7 +116,27 @@ const SpecificRecipeHandler = {
         else {
             context.speak("As you wish!");
         }
-        context.queue.askAboutNextNotification();
+        context.speak(`I also saw that you have an open table reservation at Barcha this Friday. 
+                   | Would you like me to call the restaurant about your dietary recommendations?`.stripMargin());
+        context.reprompt("shall I call the restaurant?");
+        context.setState(constants_1.STATE_CALL_RESTAURANT);
+        return context.getResponse();
+    }
+};
+const CallRestaurantHandler = {
+    canHandle(handlerInput) {
+        return utils_js_1.stateIs(handlerInput, constants_1.STATE_CALL_RESTAURANT);
+    },
+    handle(handlerInput) {
+        let context = CreateContext(handlerInput);
+        if (utils_js_1.intentIs(handlerInput, constants_1.YES_INTENT)) {
+            context.speak("Okay. I'll call them for you.");
+        }
+        else {
+            context.speak(`Okay. Don't forget to use the Blue Shield Healthy Eating app when eating out.`);
+        }
+        context.setState(constants_1.STATE_NULL);
+        context.speakReprompt("What can I help you with next?", "What next?");
         return context.getResponse();
     }
 };
@@ -188,7 +215,7 @@ const ErrorHandler = {
 const configureBuilder = () => {
     const skillBuilder = Alexa.SkillBuilders.custom();
     skillBuilder
-        .addRequestHandlers(SessionEndedRequestHandler, CancelAndStopIntentHandler, HelpIntentHandler, LaunchRequestHandler, PinHandler, RecipeHandler, SpecificRecipeHandler, PlayNotificationsHandler, HearNextNotificationHandler, NotificationExecutionHandler)
+        .addRequestHandlers(SessionEndedRequestHandler, CancelAndStopIntentHandler, FallbackHandler, HelpIntentHandler, LaunchRequestHandler, PinHandler, NotificationExecutionHandler, RecipeHandler, SpecificRecipeHandler, CallRestaurantHandler, PlayNotificationsHandler, HearNextNotificationHandler)
         .addErrorHandlers(ErrorHandler);
     return skillBuilder;
 };

@@ -107,6 +107,9 @@ export class NotificationQueue {
         case 'state': 
           return this._context.getState() === value
         case 'intent':
+          if (value === '*') {
+            return true
+          } 
           return (<IntentRequest>this._context.handlerInput.requestEnvelope.request).intent.name === value
         default:
           throw new Error(`invalid key in isMatch: ${key}`)

@@ -89,12 +89,12 @@ const test = async () => {
 
   event.session.new = false
   // note: pin slot is already in event
-  //console.log("--PIN--")
-  //await call('PinIntent')  
+  console.log("--PIN--")
+  await call('PinIntent')
 
   // You have an opthamologist appointment tomorrow at 4 P.M. Would you like me to set a reminder?
 
-  await no()
+  await yes()
 
   // OK, I've created a reminder. Your next notification is about a medication refill. Would you like to hear it now?
 
@@ -127,7 +127,6 @@ const test = async () => {
 
   // Okay, I've created a reminder each morning and evening to take your medicine. 
   // Your next notification is an announcement. Would you like to hear it now?
-  
 
   await yes()
 

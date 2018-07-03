@@ -5,6 +5,7 @@
   "main": "stc/index.js",
   "scripts": {
     "build": "tsc",
+    "deploy": "ask deploy",
     "clean": "rimraf lambda/custom"
   },
   "author": "",
