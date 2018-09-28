@@ -1,4 +1,5 @@
-node_modules
-lambda
-lambda/custom
+node_modules/
+lambda/**/*.js
+lambda/**/*.js.map
+.DS_Store
 

@@ -6,7 +6,7 @@
     "allowSyntheticDefaultImports": true,
     "allowJs": true,
     "alwaysStrict": true,
-    "sourceMap": true,
+    "sourceMap": false,
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": true,
     "noImplicitReturns": true,
@@ -17,6 +17,13 @@
     "strictNullChecks": false,
     "lib": ["es2017"],
     "outDir": "./lambda",
+    "baseUrl": ".",
+    "paths": {
+      "*": [
+        "*",
+        "./lambda/custom/node_modules/*"
+      ]
+    },
     "removeComments": true
   },
   "include": [

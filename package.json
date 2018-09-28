@@ -1,23 +1,13 @@
 {
-  "name": "aalexa-lpr",
+  "name": "alexa-lpr-demo",
   "version": "1.0.0",
-  "description": "",
-  "main": "stc/index.js",
+  "main": "custom/index.ts",
   "scripts": {
     "build": "tsc",
-    "deploy": "ask deploy",
-    "clean": "rimraf lambda/custom"
-  },
-  "author": "",
-  "license": "ISC",
-  "dependencies": {
-    "ask-sdk-core": "^2.0.5",
-    "ask-sdk-model": "^1.3.0",
-    "node-fetch": "^2.1.2"
+    "deploy": "ask deploy"
   },
   "devDependencies": {
-    "@types/moment-timezone": "^0.5.6",
-    "@types/node": "^10.3.3",
+    "@types/node": "^10.11.2",
     "typescript": "^2.9.2"
   }
 }

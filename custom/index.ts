@@ -273,7 +273,7 @@ const configureBuilder = (): Alexa.CustomSkillBuilder => {
 
 let skill: Alexa.Skill
 
-exports.handler = async (event: RequestEnvelope, context: any, callback: (err: Error | null, result?: any) => void) => {
+export const handler = async (event: RequestEnvelope, context: any, callback: (err: Error | null, result?: any) => void) => {
   //console.log(`EVENT: ${JSON.stringify(event, null, 2)}`)
 
   if (!skill) {
