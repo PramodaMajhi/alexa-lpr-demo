@@ -1,7 +1,7 @@
 {
   "interactionModel": {
     "languageModel": {
-      "invocationName": "blue demo",
+      "invocationName": "hit demo number two",
       "intents": [
         {
           "name": "AMAZON.CancelIntent",
