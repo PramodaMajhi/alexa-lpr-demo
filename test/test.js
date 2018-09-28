@@ -1,7 +1,14 @@
 const {handler} = require('../custom/index')
 
+// The response from every request will be here. When preparing to make
+// the next request, we copy over the session Attributes from this response
+// to the attributes of the next request. Of course, the sessionAttributes
+// include the "state" of the conversation.
 let response
 
+// If a callback is passed to the handler, it will call it when the 
+// request completes or fails. If not passed, it will simply return
+// the response (and throw on error). So, this is not currently used.
 const callback = (err, resp) => {
   if (err) {
     console.log(`Error: ${JSON.stringify(err, null, 2)}`)
@@ -9,6 +16,19 @@ const callback = (err, resp) => {
     console.log(`Response: ${JSON.stringify(resp, null, 2)}`)
   }
 }
+
+// This event is used for every request. 
+// After the first request:
+//   1. We flip session.new from true to false.
+//   2. We change teh request type from LaunchRequest to IntentRequest 
+// Before each request 2-n:
+//   1. We copy the sessionAttributes from the last response (above)
+//      into the attributes (to maintain state). 
+//   2. We set the intent
+
+// Note that the PIN slot is already filled in (for when we send a PIN). 
+// Technically, it will be sent in every request, but it is only accessed
+// when we send the PinIntent.
 
 let event = {
   session: {
@@ -61,21 +81,25 @@ let event = {
   }
 }
 
+// this actually sets the attributes and intent, calls the handler and
+// prints the resulting ssml. If intent is missing or null, the event will
+// be sent asis (used for LaunchRequest).
 const call = async (intent) => {
   if (intent) {
     event.session.attributes = response.sessionAttributes
-    event.request.type = 'IntentRequest'
     event.request.intent.name = intent
   }
   response = await handler(event, {})
   console.log(response.response.outputSpeech.ssml)
 }
 
+// send a YesIntent
 const yes = async () => {
   console.log('--YES--')
   await call('AMAZON.YesIntent')
 }
 
+// send a NoIntent
 const no = async () => {
   console.log('--NO--')
   await call('AMAZON.NoIntent')
@@ -88,7 +112,12 @@ const test = async () => {
   // Good morning. You have 3 notifications. Please say your Blue Shield 4-digit pin if you would like to hear them now.
 
   event.session.new = false
+  event.request.type = 'IntentRequest'
+
   // note: pin slot is already in event
+  // to test for failure, just change the PIN above or uncomment this:
+  // event.request.intent.slots.value = '9999'
+
   console.log("--PIN--")
   await call('PinIntent')
 
